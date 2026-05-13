@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Recipe Vault — Community Kitchen</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; background: #1a1208; color: #e8d5b0; min-height: 100vh; }
+    :root {
+      --bg:#1a1208; --bg2:#241a0e; --bg3:#2e2112; --card:#2a1e0f;
+      --gold:#c9962a; --gold2:#e8b84b; --cream:#e8d5b0; --muted:#9a8060;
+      --red:#8b2020; --border:#4a3520; --radius:10px;
+    }
+    h1,h2,h3,h4 { font-family: Georgia, serif; font-weight: normal; }
+    input,select,textarea,button { font-family: Georgia, serif; }
+    #app { display: flex; flex-direction: column; min-height: 100vh; }
+    header { background:#120d04; border-bottom:1px solid var(--border); padding:0 2rem; display:flex; align-items:center; justify-content:space-between; height:64px; position:sticky; top:0; z-index:100; }
+    .logo { font-size:22px; color:var(--gold2); letter-spacing:1px; cursor:pointer; }
+    .logo span { color:var(--muted); font-size:14px; margin-left:8px; }
+    .header-actions { display:flex; gap:10px; align-items:center; }
+    .btn { padding:7px 16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg3); color:var(--cream); cursor:pointer; font-size:14px; transition:all 0.2s; }
+    .btn:hover { background:var(--bg2); border-color:var(--gold); color:var(--gold2); }
+    .btn-gold { background:var(--gold); color:#1a0f00; border-color:var(--gold); font-weight:bold; }
+    .btn-gold:hover { background:var(--gold2); border-color:var(--gold2); color:#1a0f00; }
+    .btn-sm { padding:4px 10px; font-size:13px; }
+    .btn-danger { border-color:var(--red); color:#e08080; }
+    .btn-danger:hover { background:#3a0a0a; }
+    main { flex:1; padding:2rem; max-width:1100px; margin:0 auto; width:100%; }
+    .page { display:none; }
+    .page.active { display:block; }
+    .search-bar { display:flex; gap:10px; margin-bottom:1.5rem; flex-wrap:wrap; align-items:center; }
+    .search-bar input { flex:1; min-width:180px; padding:9px 14px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:15px; }
+    .search-bar input:focus { outline:none; border-color:var(--gold); }
+    .search-bar select { padding:9px 12px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:14px; cursor:pointer; }
+    .recipe-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1.5rem; }
+    .recipe-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:border-color 0.2s,transform 0.15s; }
+    .recipe-card:hover { border-color:var(--gold); transform:translateY(-2px); }
+    .card-img { width:100%; height:160px; background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:40px; overflow:hidden; }
+    .card-img img { width:100%; height:100%; object-fit:cover; }
+    .card-body { padding:1rem; }
+    .card-title { font-size:17px; color:var(--gold2); margin-bottom:6px; }
+    .card-meta { font-size:12px; color:var(--muted); display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+    .badge { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:bold; }
+    .badge-baking { background:#3d2a0a; color:#e8b84b; }
+    .badge-cooking { background:#0a2a1a; color:#5dca8a; }
+    .badge-easy { background:#0a2a10; color:#5dca70; }
+    .badge-medium { background:#2a2000; color:#d4a820; }
+    .badge-hard { background:#2a0a0a; color:#d45050; }
+    .stars { color:var(--gold); font-size:14px; }
+    .stars span { color:var(--muted); font-size:12px; margin-left:4px; }
+    .detail-img { width:100%; max-height:300px; border-radius:var(--radius); background:var(--bg3); display:flex; align-items:center; justify-content:center; font-size:64px; min-height:200px; margin-bottom:1.5rem; overflow:hidden; }
+    .detail-img img { width:100%; height:300px; object-fit:cover; }
+    .detail-title { font-size:28px; color:var(--gold2); margin-bottom:10px; }
+    .detail-meta { display:flex; gap:20px; flex-wrap:wrap; color:var(--muted); font-size:14px; margin-bottom:1rem; }
+    .section { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.25rem; }
+    .section h3 { color:var(--gold); margin-bottom:1rem; font-size:16px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+    .ingredients-list { list-style:none; }
+    .ingredients-list li { padding:6px 0; border-bottom:1px solid #3a2810; color:var(--cream); font-size:15px; }
+    .ingredients-list li:last-child { border-bottom:none; }
+    .ingredients-list li::before { content:"• "; color:var(--gold); }
+    .steps-list { list-style:none; counter-reset:steps; }
+    .steps-list li { counter-increment:steps; display:flex; gap:14px; margin-bottom:1rem; font-size:15px; color:var(--cream); line-height:1.6; }
+    .steps-list li::before { content:counter(steps); min-width:28px; height:28px; background:var(--gold); color:#1a0f00; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:13px; flex-shrink:0; margin-top:2px; }
+    .nutrition-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:10px; }
+    .nutrition-item { background:var(--bg3); border-radius:8px; padding:10px; text-align:center; }
+    .nutrition-item .val { font-size:20px; color:var(--gold2); display:block; }
+    .nutrition-item .lbl { font-size:12px; color:var(--muted); }
+    .comment { border-bottom:1px solid var(--border); padding:12px 0; }
+    .comment:last-child { border-bottom:none; }
+    .comment-author { font-size:13px; color:var(--gold); margin-bottom:4px; }
+    .comment-text { font-size:14px; color:var(--cream); line-height:1.5; }
+    .comment-date { font-size:11px; color:var(--muted); margin-top:4px; }
+    .rating-input { display:flex; gap:4px; margin-bottom:10px; }
+    .star-btn { background:none; border:none; color:#4a3520; font-size:28px; cursor:pointer; transition:color 0.1s; padding:0 2px; }
+    .star-btn.active { color:var(--gold); }
+    .star-btn:hover { color:var(--gold2); }
+    .form-group { margin-bottom:1rem; }
+    .form-group label { display:block; color:var(--gold); font-size:13px; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+    .form-group input,.form-group select,.form-group textarea { width:100%; padding:9px 12px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:14px; }
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus { outline:none; border-color:var(--gold); }
+    .form-group textarea { resize:vertical; min-height:80px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+    .form-row3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+    .dynamic-list-item { display:flex; gap:8px; margin-bottom:8px; align-items:flex-start; }
+    .dynamic-list-item input,.dynamic-list-item textarea { flex:1; padding:8px 10px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:8px; font-size:14px; font-family:Georgia,serif; }
+    .dynamic-list-item textarea { resize:vertical; }
+    .btn-remove { background:#2a0a0a; border:1px solid var(--red); color:#d08080; cursor:pointer; border-radius:6px; padding:5px 12px; font-size:20px; line-height:1; flex-shrink:0; }
+    .btn-remove:hover { background:#3a1010; }
+    .btn-add { background:#0a2010; border:1px solid #2a6040; color:#80d0a0; padding:6px 14px; border-radius:var(--radius); cursor:pointer; font-size:13px; margin-top:4px; }
+    .btn-add:hover { background:#0f2a18; }
+    .modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.78); z-index:200; align-items:center; justify-content:center; }
+    .modal-bg.open { display:flex; }
+    .modal { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:2rem; width:90%; max-width:460px; max-height:90vh; overflow-y:auto; }
+    .modal h2 { color:var(--gold2); margin-bottom:1.5rem; font-size:20px; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:1.5rem; flex-wrap:wrap; }
+    .empty-state { text-align:center; padding:4rem 2rem; color:var(--muted); }
+    .empty-state .icon { font-size:48px; margin-bottom:1rem; }
+    .back-btn { background:none; border:none; color:var(--gold); cursor:pointer; font-size:14px; margin-bottom:1rem; display:inline-flex; align-items:center; gap:6px; padding:0; }
+    .back-btn:hover { color:var(--gold2); }
+    .action-bar { display:flex; gap:10px; justify-content:flex-end; margin-bottom:1rem; flex-wrap:wrap; }
+    .alert { padding:10px 16px; border-radius:var(--radius); margin-bottom:1rem; font-size:14px; }
+    .alert-success { background:#0a2a10; border:1px solid #2a6040; color:#80d0a0; }
+    .alert-error { background:#2a0a0a; border:1px solid #6a2020; color:#d08080; }
+    .alert-info { background:#1a2030; border:1px solid #304060; color:#80a0d0; }
+    .user-chip { background:var(--bg3); border:1px solid var(--border); border-radius:20px; padding:4px 12px; font-size:13px; color:var(--gold); }
+    .page-title { font-size:24px; color:var(--gold2); margin-bottom:1.5rem; }
+    .recipe-count { color:var(--muted); font-size:14px; margin-bottom:1rem; }
+    a { color:var(--gold); cursor:pointer; text-decoration:none; }
+    a:hover { color:var(--gold2); }
+
+    .source-link { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); margin-top:6px; }
+    .source-link a { color:var(--gold); font-size:13px; }
+    .print-header { display:none; }
+
+    /* ── Print styles ── */
+    @media print {
+      body { background:#fff !important; color:#111 !important; }
+      header, .back-btn, .action-bar, #commentsSection, .rating-input-section, .modal-bg { display:none !important; }
+      main { padding:0 !important; max-width:100% !important; }
+      .page { display:none !important; }
+      #pageDetail { display:block !important; }
+      .print-header { display:block !important; border-bottom:2px solid #8b6220; padding-bottom:0.75rem; margin-bottom:1.5rem; }
+      .detail-img { border:1px solid #ccc; min-height:120px; background:#f5f5f5 !important; color:#555 !important; }
+      .detail-img img { height:200px; }
+      .detail-title { color:#1a0f00 !important; }
+      .detail-meta { color:#555 !important; }
+      .section { background:#fff !important; border:1px solid #ddd !important; break-inside:avoid; page-break-inside:avoid; }
+      .section h3 { color:#8b6220 !important; border-bottom:1px solid #ddd !important; }
+      .ingredients-list li { border-bottom:1px solid #eee !important; color:#111 !important; }
+      .ingredients-list li::before { color:#8b6220 !important; }
+      .steps-list li { color:#111 !important; }
+      .steps-list li::before { background:#8b6220 !important; color:#fff !important; }
+      .nutrition-grid { display:flex !important; gap:1.5rem !important; flex-wrap:wrap !important; }
+      .nutrition-item { background:#f5f5f5 !important; border:1px solid #ddd; }
+      .nutrition-item .val { color:#8b6220 !important; }
+      .nutrition-item .lbl { color:#555 !important; }
+      .badge-baking { background:#fff3d0 !important; color:#7a5500 !important; }
+      .badge-cooking { background:#d0f0e0 !important; color:#1a5c30 !important; }
+      .badge-easy { background:#d0f0d8 !important; color:#1a5c28 !important; }
+      .badge-medium { background:#f0ecd0 !important; color:#5c4a00 !important; }
+      .badge-hard { background:#f0d0d0 !important; color:#5c1a1a !important; }
+      .source-link { color:#555 !important; }
+    }
+
+    @media (max-width:600px) {
+      header { padding:0 1rem; }
+      main { padding:1rem; }
+      .form-row,.form-row3 { grid-template-columns:1fr; }
+      .logo span { display:none; }
+    }
+
+
+    /* ── Admin panel ── */
+    .admin-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+    .admin-tab { background:none; border:none; color:var(--muted); cursor:pointer; padding:10px 20px; font-size:15px; font-family:Georgia,serif; border-bottom:2px solid transparent; transition:all 0.2s; }
+    .admin-tab.active { color:var(--gold2); border-bottom-color:var(--gold); }
+    .admin-tab:hover { color:var(--cream); }
+    .admin-section { display:none; }
+    .admin-section.active { display:block; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; text-align:center; }
+    .stat-card .stat-val { font-size:28px; color:var(--gold2); display:block; margin-bottom:4px; }
+    .stat-card .stat-lbl { font-size:13px; color:var(--muted); }
+    .data-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .data-table th { text-align:left; padding:10px 12px; color:var(--gold); font-size:12px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); font-weight:normal; }
+    .data-table td { padding:10px 12px; border-bottom:1px solid #3a2810; color:var(--cream); vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:var(--bg3); }
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem; overflow-x:auto; }
+    .log-action { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; }
+    .log-signin { background:#0a2a10; color:#5dca70; }
+    .log-signup { background:#1a2030; color:#80a0d0; }
+    .log-signout { background:#2a2010; color:#c0a050; }
+    .log-recipe-add { background:#1a1a30; color:#a080d0; }
+    .log-recipe-edit { background:#2a1a00; color:#d0a040; }
+    .log-recipe-delete { background:#2a0a0a; color:#d05050; }
+    .log-pw-reset { background:#2a0010; color:#d060a0; }
+    .log-user-delete { background:#3a0a0a; color:#e06060; }
+    .admin-badge { background:#3d1500; color:var(--gold); border:1px solid var(--gold); border-radius:12px; padding:1px 8px; font-size:11px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo" onclick="showPage('browse')">🍽 The Recipe Vault <span>Community Kitchen</span></div>
+    <div class="header-actions" id="headerActions"></div>
+  </header>
+  <main>
+
+    <!-- Browse page -->
+    <div id="pageBrowse" class="page active">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search recipes by name..." oninput="renderRecipes()">
+        <select id="filterCategory" onchange="renderRecipes()">
+          <option value="">All Categories</option>
+          <option value="Baking">Baking</option>
+          <option value="Cooking">Cooking</option>
+        </select>
+        <select id="filterDifficulty" onchange="renderRecipes()">
+          <option value="">All Difficulties</option>
+          <option value="Easy">Easy</option>
+          <option value="Medium">Medium</option>
+          <option value="Hard">Hard</option>
+        </select>
+      </div>
+      <div class="recipe-count" id="recipeCount"></div>
+      <div class="recipe-grid" id="recipeGrid"></div>
+    </div>
+
+    <!-- Detail page -->
+    <div id="pageDetail" class="page">
+      <button class="back-btn" onclick="showPage('browse')">← Back to recipes</button>
+      <div id="recipeDetail"></div>
+    </div>
+
+    <!-- Add / Edit page -->
+    <div id="pageAdd" class="page">
+      <h2 class="page-title" id="formTitle">Add a New Recipe</h2>
+
+      
+
+      
+
+      <div id="formAlert"></div>
+
+      <div class="section">
+        <h3>Recipe Info</h3>
+        <div class="form-group"><label>Recipe Name *</label><input type="text" id="fName" placeholder="e.g. Classic Banana Bread"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Category *</label><select id="fCategory" onchange="toggleRestField()"><option value="Baking">Baking</option><option value="Cooking">Cooking</option></select></div>
+          <div class="form-group"><label>Difficulty *</label><select id="fDifficulty"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
+        </div>
+        <div class="form-row3">
+          <div class="form-group"><label>Prep Time (mins)</label><input type="number" id="fPrep" min="0" placeholder="20"></div>
+          <div class="form-group"><label>Cook Time (mins)</label><input type="number" id="fCook" min="0" placeholder="45"></div>
+          <div class="form-group"><label>Servings</label><input type="number" id="fServings" min="1" placeholder="8"></div>
+        </div>
+        <div class="form-group" id="fRestGroup" style="display:none;">
+          <label>Resting Time (mins) <span style="color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;">— optional, baking only</span></label>
+          <input type="number" id="fRest" min="0" placeholder="e.g. 30 (cooling, proofing, chilling...)">
+        </div>
+        <div class="form-group"><label>Photo URL (optional)</label><input type="text" id="fPhoto" placeholder="https://... paste an image link here"></div>
+        <div class="form-group"><label>Source URL (optional)</label><input type="text" id="fSource" placeholder="https://... original recipe link (auto-filled on import)"></div>
+        <div class="form-group"><label>Short Description</label><textarea id="fDesc" rows="2" placeholder="A brief description of the recipe..."></textarea></div>
+      </div>
+
+      <div class="section">
+        <h3>Nutrition (per serving — optional)</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Calories</label><input type="number" id="fCalories" min="0" placeholder="250"></div>
+          <div class="form-group"><label>Protein (g)</label><input type="number" id="fProtein" min="0" placeholder="6"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Carbs (g)</label><input type="number" id="fCarbs" min="0" placeholder="42"></div>
+          <div class="form-group"><label>Fat (g)</label><input type="number" id="fFat" min="0" placeholder="8"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Ingredients *</h3>
+        <div id="ingredientsList"></div>
+        <button class="btn-add" onclick="addIngredient()">+ Add Ingredient</button>
+      </div>
+
+      <div class="section">
+        <h3>Steps *</h3>
+        <div id="stepsList"></div>
+        <button class="btn-add" onclick="addStep()">+ Add Step</button>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:1rem;">
+        <button class="btn" onclick="showPage('browse')">Cancel</button>
+        <button class="btn btn-gold" onclick="saveRecipe()" id="saveBtn">Save Recipe</button>
+      </div>
+    </div>
+
+    <!-- Admin page -->
+    <div id="pageAdmin" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+        <h2 class="page-title" style="margin-bottom:0;">Admin Panel</h2>
+        <button class="btn btn-sm" onclick="showPage('browse')">← Back to site</button>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab('overview')">Overview</button>
+        <button class="admin-tab" onclick="switchAdminTab('users')">Users</button>
+        <button class="admin-tab" onclick="switchAdminTab('log')">Audit Log</button>
+      </div>
+
+      <!-- Overview -->
+      <div class="admin-section active" id="adminOverview">
+        <div class="stat-grid" id="adminStats"></div>
+        <h3 style="color:var(--gold);margin-bottom:1rem;font-size:16px;">Recent Activity</h3>
+        <div class="table-wrap"><table class="data-table" id="adminRecentLog"></table></div>
+      </div>
+
+      <!-- Users -->
+      <div class="admin-section" id="adminUsers">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <span style="color:var(--muted);font-size:14px;" id="userCount"></span>
+          <input type="text" id="userSearch" placeholder="Search users..." oninput="renderAdminUsers()" style="padding:7px 12px;background:var(--bg2);border:1px solid var(--border);color:var(--cream);border-radius:var(--radius);font-size:14px;min-width:200px;">
+        </div>
+        <div class="table-wrap"><table class="data-table" id="adminUsersTable"></table></div>
+      </div>
+
+      <!-- Audit Log -->
+      <div class="admin-section" id="adminLog">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <span style="color:var(--muted);font-size:14px;" id="logCount"></span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select id="logFilter" onchange="renderAdminLog()" style="padding:7px 12px;background:var(--bg2);border:1px solid var(--border);color:var(--cream);border-radius:var(--radius);font-size:13px;">
+              <option value="">All actions</option>
+              <option value="signin">Sign ins</option>
+              <option value="signup">Sign ups</option>
+              <option value="signout">Sign outs</option>
+              <option value="recipe">Recipe changes</option>
+              <option value="admin">Admin actions</option>
+            </select>
+            <button class="btn btn-sm btn-danger" onclick="clearAuditLog()">Clear log</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="adminLogTable"></table></div>
+      </div>
+    </div>
+
+
+  </main>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-bg" id="resetModal">
+  <div class="modal" style="max-width:380px;">
+    <h2>Reset Password</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:1.25rem;">Set a new password for <strong id="resetUsername" style="color:var(--gold2);"></strong></p>
+    <div id="resetAlert"></div>
+    <div class="form-group"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"></div>
+    <div class="form-group"><label>Confirm Password</label><input type="password" id="resetConfirmPass" placeholder="Confirm new password"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmResetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- Auth Modal -->
+<div class="modal-bg" id="authModal">
+  <div class="modal">
+    <h2 id="authTitle">Sign In</h2>
+    <div id="authAlert"></div>
+    <div class="form-group"><label>Username</label><input type="text" id="authUser" placeholder="Your username" autocomplete="username"></div>
+    <div class="form-group"><label>Password</label><input type="password" id="authPass" placeholder="Password" autocomplete="current-password"></div>
+    <div class="form-group" id="authEmailGroup" style="display:none">
+      <label>Email *</label><input type="email" id="authEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="form-group" id="authConfirmGroup" style="display:none">
+      <label>Confirm Password</label><input type="password" id="authConfirm" placeholder="Repeat password" autocomplete="new-password">
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="toggleAuthMode()" id="authSwitchBtn"></button>
+      <button class="btn" onclick="closeModal('authModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="submitAuth()" id="authSubmitBtn"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-bg" id="forgotModal">
+  <div class="modal" style="max-width:380px;">
+    <h2>Reset Password</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:1.25rem;">Enter your username and we'll send a temporary password to your registered email.</p>
+    <div id="forgotAlert"></div>
+    <div class="form-group"><label>Username</label><input type="text" id="forgotUser" placeholder="Your username"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('forgotModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="sendPasswordReset()" id="forgotBtn">Send Reset Email</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+const STORAGE_KEY = 'recipeVault_v1';
+const USERS_KEY   = 'recipeVault_users_v1';
+const SESSION_KEY = 'recipeVault_session_v1';
+
+let recipes = [], users = {}, currentUser = null;
+let authMode = 'signin', editingId = null;
+let ingCount = 0, stepCount = 0;
+
+/* ── Storage ── */
+function loadData() {
+  try { recipes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { recipes = []; }
+  try { users   = JSON.parse(localStorage.getItem(USERS_KEY))   || {}; } catch(e) { users = {}; }
+  try { currentUser = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || null; } catch(e) { currentUser = null; }
+  loadAudit();
+  if (recipes.length === 0) seedSamples();
+}
+function saveRecipes() { localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes)); }
+function saveUsers()   { localStorage.setItem(USERS_KEY,   JSON.stringify(users)); }
+function saveSession() { sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); }
+
+function seedSamples() {
+  recipes = [
+    { id:'r1', name:'Classic Banana Bread', category:'Baking', difficulty:'Easy', prep:15, cook:60, servings:8, author:'admin', photo:'', source:'', description:'A moist, tender loaf perfect for overripe bananas.', nutrition:{calories:210,protein:4,carbs:38,fat:6}, ingredients:['3 ripe bananas','1/3 cup melted butter','3/4 cup sugar','1 egg, beaten','1 tsp vanilla extract','1 tsp baking soda','Pinch of salt','1 1/2 cups all-purpose flour'], steps:['Preheat oven to 350°F (175°C). Grease a 4x8 inch loaf pan.','Mash bananas in a large bowl until smooth.','Mix in melted butter.','Beat in sugar, egg, and vanilla.','Mix in baking soda and salt.','Gently fold in flour until just combined — do not overmix.','Pour batter into pan and bake 55–65 minutes until a toothpick comes out clean.','Cool in pan 10 minutes, then turn out onto a rack.'], ratings:[{user:'chef_alice',score:5},{user:'home_baker',score:4}], comments:[{user:'chef_alice',text:'Came out perfectly! My family loved it.',date:'2025-11-02'}], createdAt:'2025-10-01' },
+    { id:'r2', name:'Garlic Butter Pasta', category:'Cooking', difficulty:'Easy', prep:5, cook:20, servings:4, author:'admin', photo:'', source:'', description:'Quick weeknight pasta with rich garlic butter and parmesan.', nutrition:{calories:420,protein:14,carbs:62,fat:14}, ingredients:['400g spaghetti','6 garlic cloves, minced','4 tbsp butter','3 tbsp olive oil','1/2 tsp red pepper flakes','1/2 cup grated parmesan','Handful fresh parsley, chopped','Salt and pepper to taste'], steps:['Cook spaghetti in well-salted boiling water until al dente. Reserve 1 cup pasta water before draining.','Melt butter with olive oil in a large skillet over medium heat.','Add garlic and red pepper flakes. Cook 2 minutes until fragrant — do not brown.','Add drained pasta and toss to coat, adding pasta water to loosen.','Remove from heat. Toss with parmesan and parsley. Season to taste.'], ratings:[{user:'chef_alice',score:5}], comments:[{user:'chef_alice',text:'Added lemon zest — incredible!',date:'2025-12-01'}], createdAt:'2025-10-15' },
+    { id:'r3', name:'Chocolate Lava Cake', category:'Baking', difficulty:'Medium', prep:20, cook:12, servings:4, author:'admin', photo:'', source:'', description:'Individual cakes with a flowing warm chocolate center.', nutrition:{calories:380,protein:7,carbs:44,fat:22}, ingredients:['170g dark chocolate, chopped','115g unsalted butter','2 whole eggs','2 egg yolks','1/4 cup sugar','2 tbsp all-purpose flour','Pinch of salt','Butter and cocoa powder for ramekins'], steps:['Preheat oven to 425°F (220°C). Butter 4 ramekins and dust with cocoa.','Melt chocolate and butter over a double boiler until smooth. Cool slightly.','Whisk eggs, yolks, and sugar until pale and thick.','Fold chocolate into eggs gently.','Fold in flour and salt.','Divide among ramekins. (Refrigerate up to 24 hrs at this stage.)','Bake 10–12 minutes — edges firm, centre jiggly.','Rest 1 min, run knife around edge, invert onto plate. Serve immediately.'], ratings:[], comments:[], createdAt:'2025-11-01' }
+  ];
+  users = { admin:{ username:'admin', password:btoa('admin123'), createdAt:'2025-10-01' } };
+  saveRecipes(); saveUsers();
+}
+
+/* ── Helpers ── */
+function uid() { return 'r'+Date.now()+Math.random().toString(36).slice(2,6); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function avgRating(r) { return (!r.ratings||!r.ratings.length)?0:r.ratings.reduce((a,b)=>a+b.score,0)/r.ratings.length; }
+function starsHTML(avg,count) {
+  let s=''; for(let i=1;i<=5;i++) s+=`<span style="color:${i<=Math.round(avg)?'#c9962a':'#4a3520'}">★</span>`;
+  return `<span class="stars">${s}<span>${avg>0?avg.toFixed(1)+' ('+count+')':'No ratings yet'}</span></span>`;
+}
+function emj(cat) { return cat==='Baking'?'🥐':'🍳'; }
+function today() { return new Date().toISOString().split('T')[0]; }
+
+/* ── Header ── */
+function renderHeader() {
+  const el = document.getElementById('headerActions');
+  if (currentUser) {
+    const adminBtn = currentUser === 'admin' ? `<button class="btn btn-sm" onclick="showPage('admin')" style="border-color:#6a3a00;color:var(--gold);">⚙ Admin</button>` : '';
+    el.innerHTML = `<span class="user-chip">👤 ${esc(currentUser)}</span>
+      ${adminBtn}
+      <button class="btn btn-gold btn-sm" onclick="showPage('add')">+ Add Recipe</button>
+      <button class="btn btn-sm" onclick="logout()">Sign out</button>`;
+  } else {
+    el.innerHTML = `<button class="btn btn-sm" onclick="openAuth('signin')">Sign in</button>
+      <button class="btn btn-gold btn-sm" onclick="openAuth('signup')">Sign up</button>`;
+  }
+}
+
+/* ── Pages ── */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const map={browse:'pageBrowse',detail:'pageDetail',add:'pageAdd',admin:'pageAdmin'};
+  document.getElementById(map[name]).classList.add('active');
+  if(name==='browse') renderRecipes();
+  if(name==='add'&&!editingId) resetForm();
+  if(name==='admin') { switchAdminTab('overview'); }
+  window.scrollTo(0,0);
+}
+
+/* ── Browse ── */
+function renderRecipes() {
+  const q   = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('filterCategory').value;
+  const dif = document.getElementById('filterDifficulty').value;
+  const list = recipes.filter(r=>
+    (!q  || r.name.toLowerCase().includes(q)||(r.description||'').toLowerCase().includes(q)) &&
+    (!cat|| r.category===cat) && (!dif||r.difficulty===dif)
+  );
+  document.getElementById('recipeCount').textContent=`${list.length} recipe${list.length!==1?'s':''} found`;
+  const grid=document.getElementById('recipeGrid');
+  if(!list.length){
+    grid.innerHTML=`<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔍</div><p>No recipes match. Try different filters or add the first one!</p></div>`;
+    return;
+  }
+  grid.innerHTML=list.map(r=>{
+    const avg=avgRating(r);
+    const imgH=r.photo
+      ?`<div class="card-img"><img src="${esc(r.photo)}" alt="${esc(r.name)}" onerror="this.parentElement.textContent='${emj(r.category)}'"></div>`
+      :`<div class="card-img">${emj(r.category)}</div>`;
+    return `<div class="recipe-card" onclick="showDetail('${r.id}')">
+      ${imgH}
+      <div class="card-body">
+        <div class="card-title">${esc(r.name)}</div>
+        <div class="card-meta"><span class="badge badge-${r.category.toLowerCase()}">${r.category}</span><span class="badge badge-${r.difficulty.toLowerCase()}">${r.difficulty}</span></div>
+        <div class="card-meta"><span>⏱ ${r.prep+r.cook+(r.rest||0)} min total</span><span>🍽 ${r.servings} servings</span></div>
+        ${starsHTML(avg,r.ratings?r.ratings.length:0)}
+        <div style="font-size:12px;color:var(--muted);margin-top:6px;">by ${esc(r.author)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Detail ── */
+function showDetail(id) {
+  const r=recipes.find(x=>x.id===id); if(!r) return;
+  const avg=avgRating(r);
+  const isOwner=currentUser&&currentUser===r.author;
+  const imgH=r.photo
+    ?`<div class="detail-img"><img src="${esc(r.photo)}" alt="${esc(r.name)}" onerror="this.parentElement.innerHTML='${emj(r.category)}'"></div>`
+    :`<div class="detail-img">${emj(r.category)}</div>`;
+  const nutH=(r.nutrition&&(r.nutrition.calories||r.nutrition.protein))?`
+    <div class="section">
+      <h3>Nutrition (per serving)</h3>
+      <div class="nutrition-grid">
+        ${r.nutrition.calories?`<div class="nutrition-item"><span class="val">${r.nutrition.calories}</span><span class="lbl">Calories</span></div>`:''}
+        ${r.nutrition.protein?`<div class="nutrition-item"><span class="val">${r.nutrition.protein}g</span><span class="lbl">Protein</span></div>`:''}
+        ${r.nutrition.carbs?`<div class="nutrition-item"><span class="val">${r.nutrition.carbs}g</span><span class="lbl">Carbs</span></div>`:''}
+        ${r.nutrition.fat?`<div class="nutrition-item"><span class="val">${r.nutrition.fat}g</span><span class="lbl">Fat</span></div>`:''}
+      </div>
+    </div>`:'';
+  const userRating=currentUser&&r.ratings?r.ratings.find(x=>x.user===currentUser):null;
+  const ratingStars=[1,2,3,4,5].map(n=>`<button class="star-btn${userRating&&userRating.score>=n?' active':''}" onclick="rateRecipe('${id}',${n})" ${!currentUser?'title="Sign in to rate"':''}>★</button>`).join('');
+  const commH=r.comments&&r.comments.length
+    ?r.comments.map(c=>`<div class="comment"><div class="comment-author">👤 ${esc(c.user)}</div><div class="comment-text">${esc(c.text)}</div><div class="comment-date">${c.date}</div></div>`).join('')
+    :'<p style="color:var(--muted);font-size:14px;">No comments yet. Be the first!</p>';
+  const addCommH=currentUser
+    ?`<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem;">
+        <div class="form-group"><label style="color:var(--gold);font-size:13px;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Add a Comment</label>
+        <textarea id="commentText" rows="3" style="width:100%;padding:9px;background:var(--bg2);border:1px solid var(--border);color:var(--cream);border-radius:8px;font-size:14px;font-family:Georgia,serif;resize:vertical;" placeholder="Share your experience with this recipe..."></textarea></div>
+        <button class="btn btn-gold btn-sm" onclick="addComment('${id}')">Post Comment</button>
+      </div>`
+    :`<p style="color:var(--muted);font-size:13px;margin-top:1rem;"><a onclick="openAuth('signin')">Sign in</a> to leave a comment.</p>`;
+  const sourceH=r.source?`<div class="source-link">🔗 Source: <a href="${esc(r.source)}" target="_blank" rel="noopener">${esc(r.source.replace(/^https?:\/\//,'').split('/')[0])}</a></div>`:'';
+  const ownerBtns=isOwner
+    ?`<button class="btn btn-sm" onclick="printRecipe()">🖨 Print</button>
+      <button class="btn btn-sm" onclick="editRecipe('${id}')">✏ Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="deleteRecipe('${id}')">🗑 Delete</button>`
+    :`<button class="btn btn-sm" onclick="printRecipe()">🖨 Print Recipe</button>`;
+
+  document.getElementById('recipeDetail').innerHTML=`
+    <div class="print-header">
+      <h1 style="font-size:26px;color:#1a0f00;margin-bottom:4px;">${esc(r.name)}</h1>
+      <p style="color:#666;font-size:13px;">The Recipe Vault &nbsp;·&nbsp; Added by ${esc(r.author)} &nbsp;·&nbsp; ${r.createdAt}</p>
+    </div>
+    <div class="action-bar">${ownerBtns}</div>
+    ${imgH}
+    <div style="margin-bottom:1.5rem;">
+      <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <span class="badge badge-${r.category.toLowerCase()}">${r.category}</span>
+        <span class="badge badge-${r.difficulty.toLowerCase()}">${r.difficulty}</span>
+      </div>
+      <h1 class="detail-title">${esc(r.name)}</h1>
+      ${r.description?`<p style="color:var(--muted);margin-bottom:.75rem;font-size:15px;">${esc(r.description)}</p>`:''}
+      <div class="detail-meta">
+        <span>⏱ Prep: ${r.prep} min</span>
+        <span>🔥 Cook: ${r.cook} min</span>
+        ${r.rest?`<span>⏳ Rest: ${r.rest} min</span>`:''}
+        <span>🍽 Serves: ${r.servings}</span>
+        <span>👤 By: ${esc(r.author)}</span>
+      </div>
+      ${starsHTML(avg,r.ratings?r.ratings.length:0)}
+      ${sourceH}
+    </div>
+    <div class="section rating-input-section">
+      <h3>Rate this recipe</h3>
+      <div class="rating-input">${ratingStars}</div>
+      ${!currentUser?'<p style="font-size:13px;color:var(--muted);">Sign in to rate this recipe.</p>':(userRating?`<p style="font-size:13px;color:var(--muted);">Your rating: ${userRating.score} ★</p>`:'')}
+    </div>
+    <div class="section">
+      <h3>Ingredients</h3>
+      <ul class="ingredients-list">${(r.ingredients||[]).map(i=>`<li>${esc(i)}</li>`).join('')}</ul>
+    </div>
+    <div class="section">
+      <h3>Instructions</h3>
+      <ol class="steps-list">${(r.steps||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
+    </div>
+    ${nutH}
+    <div class="section" id="commentsSection">
+      <h3>Comments (${r.comments?r.comments.length:0})</h3>
+      <div id="commentsArea">${commH}</div>
+      ${addCommH}
+    </div>`;
+
+  showPage('detail');
+}
+
+function printRecipe() { window.print(); }
+
+/* ── Rate & Comment ── */
+function rateRecipe(id,score) {
+  if(!currentUser){openAuth('signin');return;}
+  const r=recipes.find(x=>x.id===id); if(!r) return;
+  r.ratings=r.ratings||[];
+  const i=r.ratings.findIndex(x=>x.user===currentUser);
+  if(i>=0) r.ratings[i].score=score; else r.ratings.push({user:currentUser,score});
+  saveRecipes(); showDetail(id);
+}
+function addComment(id) {
+  if(!currentUser) return;
+  const text=document.getElementById('commentText').value.trim(); if(!text) return;
+  const r=recipes.find(x=>x.id===id); if(!r) return;
+  r.comments=r.comments||[];
+  r.comments.push({user:currentUser,text,date:today()});
+  saveRecipes(); showDetail(id);
+}
+
+/* ── Delete ── */
+function deleteRecipe(id) {
+  if(!confirm('Delete this recipe? This cannot be undone.')) return;
+  const delR=recipes.find(x=>x.id===id);
+  logAction('recipe-delete', `Deleted: ${delR?delR.name:id}`);
+  recipes=recipes.filter(r=>r.id!==id);
+  saveRecipes(); showPage('browse');
+}
+
+/* ── Form ── */
+function toggleRestField() {
+  const isBaking = document.getElementById('fCategory').value === 'Baking';
+  const grp = document.getElementById('fRestGroup');
+  grp.style.display = isBaking ? 'block' : 'none';
+  if (!isBaking) document.getElementById('fRest').value = '';
+}
+
+function resetForm() {
+  editingId=null;
+  document.getElementById('formTitle').textContent='Add a New Recipe';
+  document.getElementById('saveBtn').textContent='Save Recipe';
+  ['fName','fPrep','fCook','fServings','fRest','fPhoto','fSource','fDesc','fCalories','fProtein','fCarbs','fFat']
+    .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('fCategory').value='Baking';
+  document.getElementById('fDifficulty').value='Easy';
+  toggleRestField();
+  ingCount=0; stepCount=0;
+  document.getElementById('ingredientsList').innerHTML='';
+  document.getElementById('stepsList').innerHTML='';
+  document.getElementById('formAlert').innerHTML='';
+  document.getElementById('importUrl').value='';
+  addIngredient(); addIngredient(); addIngredient();
+  addStep(); addStep();
+}
+
+function editRecipe(id) {
+  const r=recipes.find(x=>x.id===id); if(!r) return;
+  editingId=id;
+  document.getElementById('formTitle').textContent='Edit Recipe';
+  document.getElementById('saveBtn').textContent='Save Changes';
+  document.getElementById('fName').value=r.name||'';
+  document.getElementById('fCategory').value=r.category||'Baking';
+  document.getElementById('fDifficulty').value=r.difficulty||'Easy';
+  toggleRestField();
+  document.getElementById('fPrep').value=r.prep||'';
+  document.getElementById('fCook').value=r.cook||'';
+  document.getElementById('fServings').value=r.servings||'';
+  document.getElementById('fRest').value=r.rest||'';
+  document.getElementById('fPhoto').value=r.photo||'';
+  document.getElementById('fSource').value=r.source||'';
+  document.getElementById('fDesc').value=r.description||'';
+  if(r.nutrition){
+    document.getElementById('fCalories').value=r.nutrition.calories||'';
+    document.getElementById('fProtein').value=r.nutrition.protein||'';
+    document.getElementById('fCarbs').value=r.nutrition.carbs||'';
+    document.getElementById('fFat').value=r.nutrition.fat||'';
+  }
+  ingCount=0; document.getElementById('ingredientsList').innerHTML='';
+  (r.ingredients||['']).forEach(v=>addIngredient(v));
+  stepCount=0; document.getElementById('stepsList').innerHTML='';
+  (r.steps||['']).forEach(v=>addStep(v));
+  document.getElementById('formAlert').innerHTML='';
+  showPage('add');
+}
+
+function addIngredient(val='') {
+  ingCount++;
+  const n=ingCount;
+  const div=document.createElement('div');
+  div.className='dynamic-list-item'; div.id='ing_wrap_'+n;
+  div.innerHTML=`<input type="text" id="ing_${n}" value="${esc(val)}" placeholder="e.g. 2 cups all-purpose flour">
+    <button class="btn-remove" onclick="document.getElementById('ing_wrap_${n}').remove()">−</button>`;
+  document.getElementById('ingredientsList').appendChild(div);
+}
+
+function addStep(val='') {
+  stepCount++;
+  const n=stepCount;
+  const div=document.createElement('div');
+  div.className='dynamic-list-item'; div.id='step_wrap_'+n;
+  div.innerHTML=`<textarea id="step_${n}" rows="2" placeholder="Describe this step...">${esc(val)}</textarea>
+    <button class="btn-remove" onclick="document.getElementById('step_wrap_${n}').remove()">−</button>`;
+  document.getElementById('stepsList').appendChild(div);
+}
+
+function saveRecipe() {
+  const name=document.getElementById('fName').value.trim();
+  const ingredients=Array.from(document.getElementById('ingredientsList').querySelectorAll('input[type="text"]'))
+    .map(el=>el.value.trim()).filter(Boolean);
+  const steps=Array.from(document.getElementById('stepsList').querySelectorAll('textarea'))
+    .map(el=>el.value.trim()).filter(Boolean);
+  const alertEl=document.getElementById('formAlert');
+  if(!name){alertEl.innerHTML='<div class="alert alert-error">Please enter a recipe name.</div>';return;}
+  if(!ingredients.length){alertEl.innerHTML='<div class="alert alert-error">Please add at least one ingredient.</div>';return;}
+  if(!steps.length){alertEl.innerHTML='<div class="alert alert-error">Please add at least one step.</div>';return;}
+  const data={
+    name,
+    category:document.getElementById('fCategory').value,
+    difficulty:document.getElementById('fDifficulty').value,
+    prep:parseInt(document.getElementById('fPrep').value)||0,
+    cook:parseInt(document.getElementById('fCook').value)||0,
+    rest:parseInt(document.getElementById('fRest').value)||0,
+    servings:parseInt(document.getElementById('fServings').value)||1,
+    photo:document.getElementById('fPhoto').value.trim(),
+    source:document.getElementById('fSource').value.trim(),
+    description:document.getElementById('fDesc').value.trim(),
+    nutrition:{
+      calories:parseInt(document.getElementById('fCalories').value)||0,
+      protein:parseInt(document.getElementById('fProtein').value)||0,
+      carbs:parseInt(document.getElementById('fCarbs').value)||0,
+      fat:parseInt(document.getElementById('fFat').value)||0
+    },
+    ingredients, steps
+  };
+  if(editingId){
+    const idx=recipes.findIndex(x=>x.id===editingId);
+    if(idx>=0) recipes[idx]={...recipes[idx],...data};
+  } else {
+    recipes.push({id:uid(),author:currentUser,ratings:[],comments:[],createdAt:today(),...data});
+  }
+  if(editingId) { logAction('recipe-edit', `Edited: ${data.name}`); } else { logAction('recipe-add', `Added: ${data.name}`); }
+  saveRecipes(); editingId=null; showPage('browse');
+}
+
+
+
+
+
+
+/* ── Auth ── */
+function openAuth(mode) {
+  authMode=mode;
+  document.getElementById('authModal').classList.add('open');
+  document.getElementById('authTitle').textContent=mode==='signin'?'Sign In':'Create Account';
+  document.getElementById('authSubmitBtn').textContent=mode==='signin'?'Sign In':'Create Account';
+  document.getElementById('authSwitchBtn').textContent=mode==='signin'?'Create account instead':'Already have an account?';
+  document.getElementById('authConfirmGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('authEmailGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('forgotPasswordLink').style.display=mode==='signin'?'block':'none';
+  document.getElementById('authUser').value='';
+  document.getElementById('authPass').value='';
+  const c=document.getElementById('authConfirm'); if(c) c.value='';
+  const e=document.getElementById('authEmail'); if(e) e.value='';
+  document.getElementById('authAlert').innerHTML='';
+}
+function toggleAuthMode(){openAuth(authMode==='signin'?'signup':'signin');}
+function closeModal(id){document.getElementById(id||'authModal').classList.remove('open');}
+async function submitAuth(){
+  const user=document.getElementById('authUser').value.trim();
+  const pass=document.getElementById('authPass').value;
+  const alertEl=document.getElementById('authAlert');
+  if(!user||!pass){alertEl.innerHTML='<div class="alert alert-error">Please fill in all fields.</div>';return;}
+  if(authMode==='signup'){
+    const email=document.getElementById('authEmail').value.trim();
+    const conf=document.getElementById('authConfirm').value;
+    if(!email){alertEl.innerHTML='<div class="alert alert-error">Please enter your email address.</div>';return;}
+    if(!email.includes('@')){alertEl.innerHTML='<div class="alert alert-error">Please enter a valid email address.</div>';return;}
+    if(pass!==conf){alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>';return;}
+    if(users[user]){alertEl.innerHTML='<div class="alert alert-error">That username is already taken.</div>';return;}
+    const hashed = await hashPassword(pass);
+    users[user]={username:user,password:hashed,email:email,createdAt:today()};
+    saveUsers(); currentUser=user;
+    logAction('signup', `New account: ${user}`, user);
+  }else{
+    if(!users[user]){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    const hashed = await hashPassword(pass);
+    // Support both old btoa passwords and new hashed ones
+    const validNew = users[user].password === hashed;
+    const validOld = users[user].password === btoa(pass);
+    if(!validNew && !validOld){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    // Upgrade old password to hashed on login
+    if(validOld && !validNew){ users[user].password = hashed; saveUsers(); }
+    currentUser=user;
+    logAction('signin', `Signed in`, user);
+  }
+  saveSession(); closeModal('authModal'); renderHeader();
+}
+function logout(){
+  logAction('signout', 'Signed out');
+  currentUser=null; sessionStorage.removeItem(SESSION_KEY);
+  renderHeader(); showPage('browse');
+}
+
+
+/* ── Audit Log ── */
+const AUDIT_KEY = 'recipeVault_audit_v1';
+let auditLog = [];
+function loadAudit() {
+  try { auditLog = JSON.parse(localStorage.getItem(AUDIT_KEY)) || []; } catch(e) { auditLog = []; }
+}
+function saveAudit() { localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLog.slice(-500))); }
+function logAction(action, detail, user) {
+  auditLog.unshift({
+    ts: new Date().toISOString(),
+    action,
+    detail: detail || '',
+    user: user || currentUser || 'system'
+  });
+  saveAudit();
+}
+function actionClass(action) {
+  if (action === 'signin')        return 'log-signin';
+  if (action === 'signup')        return 'log-signup';
+  if (action === 'signout')       return 'log-signout';
+  if (action === 'recipe-add')    return 'log-recipe-add';
+  if (action === 'recipe-edit')   return 'log-recipe-edit';
+  if (action === 'recipe-delete') return 'log-recipe-delete';
+  if (action === 'pw-reset')      return 'log-pw-reset';
+  if (action === 'user-delete')   return 'log-user-delete';
+  return '';
+}
+function actionLabel(action) {
+  const map = {
+    'signin':'Signed in','signup':'Signed up','signout':'Signed out',
+    'recipe-add':'Recipe added','recipe-edit':'Recipe edited','recipe-delete':'Recipe deleted',
+    'pw-reset':'Password reset','user-delete':'User deleted'
+  };
+  return map[action] || action;
+}
+function fmtTs(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── Admin tab switching ── */
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach((b,i) => {
+    const tabs = ['overview','users','log'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  const map = {overview:'adminOverview', users:'adminUsers', log:'adminLog'};
+  document.getElementById(map[tab]).classList.add('active');
+  if (tab === 'overview') renderAdminOverview();
+  if (tab === 'users')    renderAdminUsers();
+  if (tab === 'log')      renderAdminLog();
+}
+
+/* ── Admin overview ── */
+function renderAdminOverview() {
+  const totalUsers   = Object.keys(users).length;
+  const totalRecipes = recipes.length;
+  const totalComments= recipes.reduce((a,r)=>a+(r.comments?r.comments.length:0),0);
+  const totalRatings = recipes.reduce((a,r)=>a+(r.ratings?r.ratings.length:0),0);
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat-card"><span class="stat-val">${totalUsers}</span><span class="stat-lbl">Total Users</span></div>
+    <div class="stat-card"><span class="stat-val">${totalRecipes}</span><span class="stat-lbl">Total Recipes</span></div>
+    <div class="stat-card"><span class="stat-val">${totalComments}</span><span class="stat-lbl">Comments</span></div>
+    <div class="stat-card"><span class="stat-val">${totalRatings}</span><span class="stat-lbl">Ratings</span></div>
+    <div class="stat-card"><span class="stat-val">${auditLog.length}</span><span class="stat-lbl">Log Entries</span></div>
+  `;
+  const recent = auditLog.slice(0,10);
+  document.getElementById('adminRecentLog').innerHTML = recent.length
+    ? `<thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+        ${recent.map(e=>`<tr>
+          <td style="white-space:nowrap;color:var(--muted);font-size:12px;">${fmtTs(e.ts)}</td>
+          <td><strong style="color:var(--gold);">${esc(e.user)}</strong></td>
+          <td><span class="log-action ${actionClass(e.action)}">${actionLabel(e.action)}</span></td>
+          <td style="color:var(--muted);font-size:13px;">${esc(e.detail)}</td>
+        </tr>`).join('')}
+       </tbody>`
+    : `<tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">No activity yet.</td></tr></tbody>`;
+}
+
+/* ── Admin users ── */
+let resetTargetUser = null;
+function renderAdminUsers() {
+  const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  const list = Object.values(users).filter(u => !q || u.username.toLowerCase().includes(q));
+  document.getElementById('userCount').textContent = `${list.length} user${list.length!==1?'s':''}`;
+  const isAdmin = u => u.username === 'admin';
+  document.getElementById('adminUsersTable').innerHTML = `
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(u => {
+      const recipeCount = recipes.filter(r=>r.author===u.username).length;
+      const isSelf = u.username === currentUser;
+      const adminBadge = isAdmin(u) ? `<span class="admin-badge">Admin</span> ` : '';
+      return `<tr>
+        <td>${adminBadge}<strong style="color:var(--cream);">${esc(u.username)}</strong>${isSelf?' <span style="color:var(--muted);font-size:11px;">(you)</span>':''}</td>
+        <td style="color:var(--muted);font-size:13px;">${u.email||'<span style=color:#6a4020>No email</span>'}</td>
+        <td style="color:var(--muted);">${isAdmin(u)?'Administrator':'Member'}</td>
+        <td style="color:var(--muted);font-size:13px;">${u.createdAt||'—'}</td>
+        <td style="color:var(--muted);">${recipeCount}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="openResetModal('${esc(u.username)}')">Reset password</button>
+            ${!isSelf&&!isAdmin(u)?`<button class="btn btn-sm btn-danger" onclick="deleteUser('${esc(u.username)}')">Delete</button>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}
+    ${!list.length?'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No users found.</td></tr>':''}</tbody>`;
+}
+
+function openResetModal(username) {
+  resetTargetUser = username;
+  document.getElementById('resetUsername').textContent = username;
+  document.getElementById('resetNewPass').value = '';
+  document.getElementById('resetConfirmPass').value = '';
+  document.getElementById('resetAlert').innerHTML = '';
+  document.getElementById('resetModal').classList.add('open');
+}
+function confirmResetPassword() {
+  const newPass = document.getElementById('resetNewPass').value;
+  const confirm = document.getElementById('resetConfirmPass').value;
+  const alertEl = document.getElementById('resetAlert');
+  if (!newPass) { alertEl.innerHTML='<div class="alert alert-error">Please enter a new password.</div>'; return; }
+  if (newPass !== confirm) { alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>'; return; }
+  if (!users[resetTargetUser]) { alertEl.innerHTML='<div class="alert alert-error">User not found.</div>'; return; }
+  hashPassword(newPass).then(hashed => {
+    users[resetTargetUser].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Password reset for ${resetTargetUser}`);
+    closeModal('resetModal');
+    renderAdminUsers();
+  });
+}
+
+function deleteUser(username) {
+  if (!confirm(`Permanently delete user "${username}"? Their recipes will remain but be attributed to a deleted account.`)) return;
+  delete users[username];
+  saveUsers();
+  logAction('user-delete', `Deleted user: ${username}`);
+  renderAdminUsers();
+  renderAdminOverview();
+}
+
+/* ── Admin audit log ── */
+function renderAdminLog() {
+  const filter = document.getElementById('logFilter')?.value || '';
+  const list = auditLog.filter(e => {
+    if (!filter) return true;
+    if (filter === 'recipe') return e.action.startsWith('recipe');
+    if (filter === 'admin')  return e.action === 'pw-reset' || e.action === 'user-delete';
+    return e.action === filter;
+  });
+  document.getElementById('logCount').textContent = `${list.length} entr${list.length!==1?'ies':'y'}`;
+  document.getElementById('adminLogTable').innerHTML = list.length
+    ? `<thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+        ${list.map(e=>`<tr>
+          <td style="white-space:nowrap;color:var(--muted);font-size:12px;">${fmtTs(e.ts)}</td>
+          <td><strong style="color:var(--gold);">${esc(e.user)}</strong></td>
+          <td><span class="log-action ${actionClass(e.action)}">${actionLabel(e.action)}</span></td>
+          <td style="color:var(--muted);font-size:13px;">${esc(e.detail)}</td>
+        </tr>`).join('')}
+       </tbody>`
+    : `<tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">No log entries match.</td></tr></tbody>`;
+}
+function clearAuditLog() {
+  if (!confirm('Clear the entire audit log? This cannot be undone.')) return;
+  auditLog = [];
+  saveAudit();
+  renderAdminLog();
+  renderAdminOverview();
+}
+
+
+
+
+
+/* ── EmailJS config ── */
+const EMAILJS_SERVICE  = 'service_4gy8d5i';
+const EMAILJS_TEMPLATE = 'template_r3adf8n';
+const EMAILJS_PUBLIC   = 'xRww7nZeZ_2UqzJ02';
+
+/* ── Password hashing (SHA-256) ── */
+async function hashPassword(password) {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── Forgot password ── */
+function openForgotPassword() {
+  closeModal('authModal');
+  document.getElementById('forgotUser').value = '';
+  document.getElementById('forgotAlert').innerHTML = '';
+  document.getElementById('forgotBtn').textContent = 'Send Reset Email';
+  document.getElementById('forgotModal').classList.add('open');
+}
+
+async function sendPasswordReset() {
+  const username = document.getElementById('forgotUser').value.trim();
+  const alertEl  = document.getElementById('forgotAlert');
+  const btn      = document.getElementById('forgotBtn');
+  if (!username) { alertEl.innerHTML = '<div class="alert alert-error">Please enter your username.</div>'; return; }
+  if (!users[username]) { alertEl.innerHTML = '<div class="alert alert-error">No account found with that username.</div>'; return; }
+  if (!users[username].email) { alertEl.innerHTML = '<div class="alert alert-error">No email address on file for this account. Please contact the admin.</div>'; return; }
+
+  // Generate a random temporary password
+  const tempPass = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  const hashed   = await hashPassword(tempPass);
+
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    emailjs.init(EMAILJS_PUBLIC);
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_name:       users[username].username,
+      to_email:      users[username].email,
+      temp_password: tempPass,
+      from_name:     'The Recipe Vault'
+    });
+    // Only update password after email sends successfully
+    users[username].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Self-service password reset for ${username}`, username);
+    alertEl.innerHTML = '<div class="alert alert-success">✅ A temporary password has been sent to your email. Check your inbox and use it to sign in.</div>';
+    btn.textContent = 'Sent!';
+  } catch(err) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Could not send email. Please contact the admin to reset your password.</div>';
+    btn.textContent = 'Send Reset Email';
+    btn.disabled = false;
+  }
+}
+
+/* ── Boot ── */
+loadData(); renderHeader(); renderRecipes();
+</script>
+</body>
+</html>
