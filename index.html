@@ -108,12 +108,7 @@
     .recipe-count { color:var(--muted); font-size:14px; margin-bottom:1rem; }
     a { color:var(--gold); cursor:pointer; text-decoration:none; }
     a:hover { color:var(--gold2); }
-    .import-box { background:var(--bg3); border:1px dashed var(--gold); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; }
-    .import-box h4 { color:var(--gold); font-size:14px; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
-    .import-row { display:flex; gap:8px; }
-    .import-row input { flex:1; padding:9px 12px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:14px; }
-    .import-row input:focus { outline:none; border-color:var(--gold); }
-    .import-note { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6; }
+
     .source-link { display:inline-flex; align-items:center; gap:6px; font-size:13px; color:var(--muted); margin-top:6px; }
     .source-link a { color:var(--gold); font-size:13px; }
     .print-header { display:none; }
@@ -121,7 +116,7 @@
     /* ── Print styles ── */
     @media print {
       body { background:#fff !important; color:#111 !important; }
-      header, .back-btn, .action-bar, #commentsSection, .rating-input-section, .modal-bg, .import-box { display:none !important; }
+      header, .back-btn, .action-bar, #commentsSection, .rating-input-section, .modal-bg { display:none !important; }
       main { padding:0 !important; max-width:100% !important; }
       .page { display:none !important; }
       #pageDetail { display:block !important; }
@@ -153,8 +148,41 @@
       main { padding:1rem; }
       .form-row,.form-row3 { grid-template-columns:1fr; }
       .logo span { display:none; }
-      .import-row { flex-direction:column; }
     }
+
+
+    .import-box { background:var(--bg3); border:1px dashed var(--gold); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; }
+    .import-row { display:flex; gap:8px; }
+    .import-row input { flex:1; padding:9px 12px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:14px; }
+    .import-row input:focus { outline:none; border-color:var(--gold); }
+    .import-note { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6; }
+    /* ── Admin panel ── */
+    .admin-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
+    .admin-tab { background:none; border:none; color:var(--muted); cursor:pointer; padding:10px 20px; font-size:15px; font-family:Georgia,serif; border-bottom:2px solid transparent; transition:all 0.2s; }
+    .admin-tab.active { color:var(--gold2); border-bottom-color:var(--gold); }
+    .admin-tab:hover { color:var(--cream); }
+    .admin-section { display:none; }
+    .admin-section.active { display:block; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:1rem; text-align:center; }
+    .stat-card .stat-val { font-size:28px; color:var(--gold2); display:block; margin-bottom:4px; }
+    .stat-card .stat-lbl { font-size:13px; color:var(--muted); }
+    .data-table { width:100%; border-collapse:collapse; font-size:14px; }
+    .data-table th { text-align:left; padding:10px 12px; color:var(--gold); font-size:12px; text-transform:uppercase; letter-spacing:.5px; border-bottom:1px solid var(--border); font-weight:normal; }
+    .data-table td { padding:10px 12px; border-bottom:1px solid #3a2810; color:var(--cream); vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:var(--bg3); }
+    .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:1.5rem; overflow-x:auto; }
+    .log-action { display:inline-block; padding:2px 8px; border-radius:12px; font-size:11px; font-weight:bold; }
+    .log-signin { background:#0a2a10; color:#5dca70; }
+    .log-signup { background:#1a2030; color:#80a0d0; }
+    .log-signout { background:#2a2010; color:#c0a050; }
+    .log-recipe-add { background:#1a1a30; color:#a080d0; }
+    .log-recipe-edit { background:#2a1a00; color:#d0a040; }
+    .log-recipe-delete { background:#2a0a0a; color:#d05050; }
+    .log-pw-reset { background:#2a0010; color:#d060a0; }
+    .log-user-delete { background:#3a0a0a; color:#e06060; }
+    .admin-badge { background:#3d1500; color:var(--gold); border:1px solid var(--gold); border-radius:12px; padding:1px 8px; font-size:11px; }
   </style>
 </head>
 <body>
@@ -195,15 +223,36 @@
     <div id="pageAdd" class="page">
       <h2 class="page-title" id="formTitle">Add a New Recipe</h2>
 
+      
+
       <div class="import-box" id="importBox">
-        <h4>🔗 Import from a Recipe Website</h4>
-        <div class="import-row">
-          <input type="url" id="importUrl" placeholder="Paste a recipe URL — e.g. https://www.allrecipes.com/recipe/...">
-          <button class="btn btn-gold" onclick="importFromUrl()">Import</button>
+        <div style="display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid var(--border);">
+          <button id="tabUrl" onclick="switchImportTab('url')" style="background:none;border:none;color:var(--gold2);cursor:pointer;padding:6px 16px 10px;font-family:Georgia,serif;font-size:14px;border-bottom:2px solid var(--gold);margin-bottom:-1px;">Link</button>
+          <button id="tabPhoto" onclick="switchImportTab('photo')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 16px 10px;font-family:Georgia,serif;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;">Photo</button>
         </div>
-        <div class="import-note">
-          Paste a link from any recipe website and AI will extract the details automatically. You can review and edit everything before saving.<br>
-          <strong style="color:var(--gold);">Works great with:</strong> AllRecipes, Food Network, BBC Good Food, Tasty, Serious Eats, and most major recipe sites.
+        <div id="importTabUrl">
+          <div class="import-row">
+            <input type="url" id="importUrl" placeholder="Paste a recipe URL — e.g. https://www.allrecipes.com/recipe/...">
+            <button class="btn btn-gold" onclick="importFromUrl()">Import</button>
+          </div>
+          <div class="import-note">Paste a link from any recipe website and AI will extract the details automatically.<br><strong style="color:var(--gold);">Works great with:</strong> AllRecipes, Food Network, BBC Good Food, Tasty, Serious Eats, and most major recipe sites.</div>
+        </div>
+        <div id="importTabPhoto" style="display:none;">
+          <div id="photoDropZone" onclick="document.getElementById('photoFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handlePhotoDrop(event)" style="border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;">
+            <div style="font-size:36px;margin-bottom:8px;">📷</div>
+            <div style="color:var(--cream);font-size:15px;margin-bottom:4px;">Click to upload a photo</div>
+            <div style="color:var(--muted);font-size:13px;">or drag and drop an image here</div>
+            <div style="color:var(--muted);font-size:12px;margin-top:6px;">JPG, PNG, WEBP supported</div>
+          </div>
+          <input type="file" id="photoFileInput" accept="image/*" style="display:none;" onchange="handlePhotoSelected(event)">
+          <div id="photoPreviewWrap" style="display:none;margin-top:10px;">
+            <img id="photoPreview" style="max-width:100%;max-height:220px;border-radius:var(--radius);object-fit:contain;background:var(--bg3);padding:4px;">
+            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <button class="btn btn-gold" onclick="importFromImage()">Extract Recipe from Photo</button>
+              <button class="btn btn-sm" onclick="clearPhotoImport()">Clear photo</button>
+            </div>
+          </div>
+          <div class="import-note" style="margin-top:10px;">Upload a photo of a recipe — a handwritten card, cookbook page, screenshot, or printed recipe. AI will read and extract everything it can find.<br><strong style="color:var(--gold);">Tip:</strong> Clear, well-lit photos of printed or handwritten recipes work best.</div>
         </div>
         <div id="importAlert" style="margin-top:10px;"></div>
       </div>
@@ -214,13 +263,17 @@
         <h3>Recipe Info</h3>
         <div class="form-group"><label>Recipe Name *</label><input type="text" id="fName" placeholder="e.g. Classic Banana Bread"></div>
         <div class="form-row">
-          <div class="form-group"><label>Category *</label><select id="fCategory"><option value="Baking">Baking</option><option value="Cooking">Cooking</option></select></div>
+          <div class="form-group"><label>Category *</label><select id="fCategory" onchange="toggleRestField()"><option value="Baking">Baking</option><option value="Cooking">Cooking</option></select></div>
           <div class="form-group"><label>Difficulty *</label><select id="fDifficulty"><option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option></select></div>
         </div>
         <div class="form-row3">
           <div class="form-group"><label>Prep Time (mins)</label><input type="number" id="fPrep" min="0" placeholder="20"></div>
           <div class="form-group"><label>Cook Time (mins)</label><input type="number" id="fCook" min="0" placeholder="45"></div>
           <div class="form-group"><label>Servings</label><input type="number" id="fServings" min="1" placeholder="8"></div>
+        </div>
+        <div class="form-group" id="fRestGroup" style="display:none;">
+          <label>Resting Time (mins) <span style="color:var(--muted);font-size:11px;text-transform:none;letter-spacing:0;">— optional, baking only</span></label>
+          <input type="number" id="fRest" min="0" placeholder="e.g. 30 (cooling, proofing, chilling...)">
         </div>
         <div class="form-group"><label>Photo URL (optional)</label><input type="text" id="fPhoto" placeholder="https://... paste an image link here"></div>
         <div class="form-group"><label>Source URL (optional)</label><input type="text" id="fSource" placeholder="https://... original recipe link (auto-filled on import)"></div>
@@ -257,7 +310,81 @@
       </div>
     </div>
 
+    <!-- Admin page -->
+    <div id="pageAdmin" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:10px;">
+        <h2 class="page-title" style="margin-bottom:0;">Admin Panel</h2>
+        <button class="btn btn-sm" onclick="showPage('browse')">← Back to site</button>
+      </div>
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchAdminTab('overview')">Overview</button>
+        <button class="admin-tab" onclick="switchAdminTab('users')">Users</button>
+        <button class="admin-tab" onclick="switchAdminTab('log')">Audit Log</button>
+      </div>
+
+      <!-- Overview -->
+      <div class="admin-section active" id="adminOverview">
+        <div class="stat-grid" id="adminStats"></div>
+        <h3 style="color:var(--gold);margin-bottom:1rem;font-size:16px;">Recent Activity</h3>
+        <div class="table-wrap"><table class="data-table" id="adminRecentLog"></table></div>
+      </div>
+
+      <!-- Users -->
+      <div class="admin-section" id="adminUsers">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <span style="color:var(--muted);font-size:14px;" id="userCount"></span>
+          <input type="text" id="userSearch" placeholder="Search users..." oninput="renderAdminUsers()" style="padding:7px 12px;background:var(--bg2);border:1px solid var(--border);color:var(--cream);border-radius:var(--radius);font-size:14px;min-width:200px;">
+        </div>
+        <div class="table-wrap"><table class="data-table" id="adminUsersTable"></table></div>
+      </div>
+
+      <!-- Audit Log -->
+      <div class="admin-section" id="adminLog">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+          <span style="color:var(--muted);font-size:14px;" id="logCount"></span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select id="logFilter" onchange="renderAdminLog()" style="padding:7px 12px;background:var(--bg2);border:1px solid var(--border);color:var(--cream);border-radius:var(--radius);font-size:13px;">
+              <option value="">All actions</option>
+              <option value="signin">Sign ins</option>
+              <option value="signup">Sign ups</option>
+              <option value="signout">Sign outs</option>
+              <option value="recipe">Recipe changes</option>
+              <option value="admin">Admin actions</option>
+            </select>
+            <button class="btn btn-sm btn-danger" onclick="clearAuditLog()">Clear log</button>
+          </div>
+        </div>
+        <div class="table-wrap"><table class="data-table" id="adminLogTable"></table></div>
+      </div>
+    </div>
+
+
   </main>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-bg" id="resetModal">
+  <div class="modal" style="max-width:380px;">
+    <h2>Reset Password</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:1.25rem;">Set a new password for <strong id="resetUsername" style="color:var(--gold2);"></strong></p>
+    <div id="resetAlert"></div>
+    <div class="form-group"><label>New Password</label><input type="password" id="resetNewPass" placeholder="New password"></div>
+    <div class="form-group"><label>Confirm Password</label><input type="password" id="resetConfirmPass" placeholder="Confirm new password"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="confirmResetPassword()">Reset Password</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Loading Modal -->
+<div class="modal-bg" id="loadingModal">
+  <div class="modal" style="text-align:center;max-width:340px;">
+    <div style="font-size:40px;margin-bottom:1rem;">⏳</div>
+    <h2 style="margin-bottom:0.75rem;">Importing Recipe</h2>
+    <p style="color:var(--muted);font-size:14px;line-height:1.6;" id="loadingMsg">Reading the recipe page...</p>
+  </div>
 </div>
 
 <!-- Auth Modal -->
@@ -278,14 +405,7 @@
   </div>
 </div>
 
-<!-- Loading Modal -->
-<div class="modal-bg" id="loadingModal">
-  <div class="modal" style="text-align:center;max-width:340px;">
-    <div style="font-size:40px;margin-bottom:1rem;">⏳</div>
-    <h2 style="margin-bottom:0.75rem;">Importing Recipe</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;" id="loadingMsg">Reading the recipe page...</p>
-  </div>
-</div>
+
 
 <script>
 const STORAGE_KEY = 'recipeVault_v1';
@@ -301,6 +421,7 @@ function loadData() {
   try { recipes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { recipes = []; }
   try { users   = JSON.parse(localStorage.getItem(USERS_KEY))   || {}; } catch(e) { users = {}; }
   try { currentUser = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || null; } catch(e) { currentUser = null; }
+  loadAudit();
   if (recipes.length === 0) seedSamples();
 }
 function saveRecipes() { localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes)); }
@@ -332,7 +453,9 @@ function today() { return new Date().toISOString().split('T')[0]; }
 function renderHeader() {
   const el = document.getElementById('headerActions');
   if (currentUser) {
+    const adminBtn = currentUser === 'admin' ? `<button class="btn btn-sm" onclick="showPage('admin')" style="border-color:#6a3a00;color:var(--gold);">⚙ Admin</button>` : '';
     el.innerHTML = `<span class="user-chip">👤 ${esc(currentUser)}</span>
+      ${adminBtn}
       <button class="btn btn-gold btn-sm" onclick="showPage('add')">+ Add Recipe</button>
       <button class="btn btn-sm" onclick="logout()">Sign out</button>`;
   } else {
@@ -344,10 +467,11 @@ function renderHeader() {
 /* ── Pages ── */
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  const map={browse:'pageBrowse',detail:'pageDetail',add:'pageAdd'};
+  const map={browse:'pageBrowse',detail:'pageDetail',add:'pageAdd',admin:'pageAdmin'};
   document.getElementById(map[name]).classList.add('active');
   if(name==='browse') renderRecipes();
   if(name==='add'&&!editingId) resetForm();
+  if(name==='admin') { switchAdminTab('overview'); }
   window.scrollTo(0,0);
 }
 
@@ -376,7 +500,7 @@ function renderRecipes() {
       <div class="card-body">
         <div class="card-title">${esc(r.name)}</div>
         <div class="card-meta"><span class="badge badge-${r.category.toLowerCase()}">${r.category}</span><span class="badge badge-${r.difficulty.toLowerCase()}">${r.difficulty}</span></div>
-        <div class="card-meta"><span>⏱ ${r.prep+r.cook} min total</span><span>🍽 ${r.servings} servings</span></div>
+        <div class="card-meta"><span>⏱ ${r.prep+r.cook+(r.rest||0)} min total</span><span>🍽 ${r.servings} servings</span></div>
         ${starsHTML(avg,r.ratings?r.ratings.length:0)}
         <div style="font-size:12px;color:var(--muted);margin-top:6px;">by ${esc(r.author)}</div>
       </div>
@@ -438,6 +562,7 @@ function showDetail(id) {
       <div class="detail-meta">
         <span>⏱ Prep: ${r.prep} min</span>
         <span>🔥 Cook: ${r.cook} min</span>
+        ${r.rest?`<span>⏳ Rest: ${r.rest} min</span>`:''}
         <span>🍽 Serves: ${r.servings}</span>
         <span>👤 By: ${esc(r.author)}</span>
       </div>
@@ -490,26 +615,37 @@ function addComment(id) {
 /* ── Delete ── */
 function deleteRecipe(id) {
   if(!confirm('Delete this recipe? This cannot be undone.')) return;
+  const delR=recipes.find(x=>x.id===id);
+  logAction('recipe-delete', `Deleted: ${delR?delR.name:id}`);
   recipes=recipes.filter(r=>r.id!==id);
   saveRecipes(); showPage('browse');
 }
 
 /* ── Form ── */
+function toggleRestField() {
+  const isBaking = document.getElementById('fCategory').value === 'Baking';
+  const grp = document.getElementById('fRestGroup');
+  grp.style.display = isBaking ? 'block' : 'none';
+  if (!isBaking) document.getElementById('fRest').value = '';
+}
+
 function resetForm() {
   editingId=null;
   document.getElementById('formTitle').textContent='Add a New Recipe';
   document.getElementById('saveBtn').textContent='Save Recipe';
-  ['fName','fPrep','fCook','fServings','fPhoto','fSource','fDesc','fCalories','fProtein','fCarbs','fFat']
+  ['fName','fPrep','fCook','fServings','fRest','fPhoto','fSource','fDesc','fCalories','fProtein','fCarbs','fFat']
     .forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fCategory').value='Baking';
   document.getElementById('fDifficulty').value='Easy';
+  toggleRestField();
+  document.getElementById('importBox').style.display='block';
+  switchImportTab('url');
+  clearPhotoImport();
   ingCount=0; stepCount=0;
   document.getElementById('ingredientsList').innerHTML='';
   document.getElementById('stepsList').innerHTML='';
   document.getElementById('formAlert').innerHTML='';
-  document.getElementById('importAlert').innerHTML='';
   document.getElementById('importUrl').value='';
-  document.getElementById('importBox').style.display='block';
   addIngredient(); addIngredient(); addIngredient();
   addStep(); addStep();
 }
@@ -522,9 +658,11 @@ function editRecipe(id) {
   document.getElementById('fName').value=r.name||'';
   document.getElementById('fCategory').value=r.category||'Baking';
   document.getElementById('fDifficulty').value=r.difficulty||'Easy';
+  toggleRestField();
   document.getElementById('fPrep').value=r.prep||'';
   document.getElementById('fCook').value=r.cook||'';
   document.getElementById('fServings').value=r.servings||'';
+  document.getElementById('fRest').value=r.rest||'';
   document.getElementById('fPhoto').value=r.photo||'';
   document.getElementById('fSource').value=r.source||'';
   document.getElementById('fDesc').value=r.description||'';
@@ -579,6 +717,7 @@ function saveRecipe() {
     difficulty:document.getElementById('fDifficulty').value,
     prep:parseInt(document.getElementById('fPrep').value)||0,
     cook:parseInt(document.getElementById('fCook').value)||0,
+    rest:parseInt(document.getElementById('fRest').value)||0,
     servings:parseInt(document.getElementById('fServings').value)||1,
     photo:document.getElementById('fPhoto').value.trim(),
     source:document.getElementById('fSource').value.trim(),
@@ -597,105 +736,14 @@ function saveRecipe() {
   } else {
     recipes.push({id:uid(),author:currentUser,ratings:[],comments:[],createdAt:today(),...data});
   }
+  if(editingId) { logAction('recipe-edit', `Edited: ${data.name}`); } else { logAction('recipe-add', `Added: ${data.name}`); }
   saveRecipes(); editingId=null; showPage('browse');
 }
 
-/* ── Import from URL ── */
-async function importFromUrl() {
-  const url=document.getElementById('importUrl').value.trim();
-  const alertEl=document.getElementById('importAlert');
-  if(!url){alertEl.innerHTML='<div class="alert alert-error">Please paste a recipe URL first.</div>';return;}
-  try{new URL(url);}catch(e){alertEl.innerHTML='<div class="alert alert-error">That doesn\'t look like a valid URL. Make sure it starts with https://</div>';return;}
 
-  alertEl.innerHTML='';
-  document.getElementById('loadingModal').classList.add('open');
-  document.getElementById('loadingMsg').textContent='Fetching the recipe page...';
 
-  try {
-    let pageText='';
-    try {
-      const proxyRes=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(url));
-      if(proxyRes.ok){
-        const proxyData=await proxyRes.json();
-        const tmp=document.createElement('div');
-        tmp.innerHTML=proxyData.contents||'';
-        tmp.querySelectorAll('script,style,nav,footer,header,aside,iframe,noscript').forEach(el=>el.remove());
-        pageText=(tmp.innerText||tmp.textContent||'').replace(/\s+/g,' ').slice(0,6000);
-      }
-    } catch(fetchErr){ /* fallback below */ }
 
-    if(!pageText||pageText.length<50) pageText=`Please extract a recipe from this URL: ${url}`;
 
-    document.getElementById('loadingMsg').textContent='AI is reading the recipe...';
-
-    const aiRes=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`Extract a recipe from this webpage text and return ONLY a valid JSON object with no explanation, no markdown, no backticks — just raw JSON.
-
-Required fields:
-{
-  "name": "Recipe name",
-  "category": "Baking" or "Cooking",
-  "difficulty": "Easy" or "Medium" or "Hard",
-  "prep": integer minutes (0 if unknown),
-  "cook": integer minutes (0 if unknown),
-  "servings": integer (4 if unknown),
-  "description": "1-2 sentence description",
-  "ingredients": ["ingredient 1", "ingredient 2", ...],
-  "steps": ["Step 1", "Step 2", ...],
-  "nutrition": { "calories": integer, "protein": integer, "carbs": integer, "fat": integer }
-}
-
-Rules: category must be "Baking" or "Cooking". difficulty must be "Easy", "Medium", or "Hard". All nutrition values are integers (0 if unknown). Return valid JSON only.
-
-Webpage content:
-${pageText}`}]
-      })
-    });
-
-    const aiData=await aiRes.json();
-    const rawText=(aiData.content||[]).map(b=>b.text||'').join('').trim();
-    let extracted;
-    try{
-      const clean=rawText.replace(/```json|```/gi,'').trim();
-      extracted=JSON.parse(clean);
-    }catch(e){throw new Error('Could not read the recipe data. Try a different URL or fill in the details manually.');}
-
-    document.getElementById('loadingModal').classList.remove('open');
-
-    // Populate fields
-    if(extracted.name) document.getElementById('fName').value=extracted.name;
-    if(extracted.category==='Baking'||extracted.category==='Cooking') document.getElementById('fCategory').value=extracted.category;
-    if(['Easy','Medium','Hard'].includes(extracted.difficulty)) document.getElementById('fDifficulty').value=extracted.difficulty;
-    if(extracted.prep) document.getElementById('fPrep').value=extracted.prep;
-    if(extracted.cook) document.getElementById('fCook').value=extracted.cook;
-    if(extracted.servings) document.getElementById('fServings').value=extracted.servings;
-    if(extracted.description) document.getElementById('fDesc').value=extracted.description;
-    document.getElementById('fSource').value=url;
-    if(extracted.nutrition){
-      if(extracted.nutrition.calories) document.getElementById('fCalories').value=extracted.nutrition.calories;
-      if(extracted.nutrition.protein)  document.getElementById('fProtein').value=extracted.nutrition.protein;
-      if(extracted.nutrition.carbs)    document.getElementById('fCarbs').value=extracted.nutrition.carbs;
-      if(extracted.nutrition.fat)      document.getElementById('fFat').value=extracted.nutrition.fat;
-    }
-    ingCount=0; document.getElementById('ingredientsList').innerHTML='';
-    (extracted.ingredients||[]).forEach(v=>addIngredient(v));
-    if(!(extracted.ingredients||[]).length){addIngredient();addIngredient();addIngredient();}
-    stepCount=0; document.getElementById('stepsList').innerHTML='';
-    (extracted.steps||[]).forEach(v=>addStep(v));
-    if(!(extracted.steps||[]).length){addStep();addStep();}
-
-    alertEl.innerHTML='<div class="alert alert-success">✅ Recipe imported! Review the details below and make any corrections before saving.</div>';
-
-  }catch(err){
-    document.getElementById('loadingModal').classList.remove('open');
-    alertEl.innerHTML=`<div class="alert alert-error">⚠️ Import failed: ${esc(err.message||'Unknown error')}. You can fill in the recipe manually below.</div>`;
-  }
-}
 
 /* ── Auth ── */
 function openAuth(mode) {
@@ -723,15 +771,297 @@ function submitAuth(){
     if(users[user]){alertEl.innerHTML='<div class="alert alert-error">That username is already taken.</div>';return;}
     users[user]={username:user,password:btoa(pass),createdAt:today()};
     saveUsers(); currentUser=user;
+    logAction('signup', `New account: ${user}`, user);
   }else{
     if(!users[user]||users[user].password!==btoa(pass)){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
     currentUser=user;
+    logAction('signin', `Signed in`, user);
   }
   saveSession(); closeModal('authModal'); renderHeader();
 }
 function logout(){
+  logAction('signout', 'Signed out');
   currentUser=null; sessionStorage.removeItem(SESSION_KEY);
   renderHeader(); showPage('browse');
+}
+
+
+/* ── Audit Log ── */
+const AUDIT_KEY = 'recipeVault_audit_v1';
+let auditLog = [];
+function loadAudit() {
+  try { auditLog = JSON.parse(localStorage.getItem(AUDIT_KEY)) || []; } catch(e) { auditLog = []; }
+}
+function saveAudit() { localStorage.setItem(AUDIT_KEY, JSON.stringify(auditLog.slice(-500))); }
+function logAction(action, detail, user) {
+  auditLog.unshift({
+    ts: new Date().toISOString(),
+    action,
+    detail: detail || '',
+    user: user || currentUser || 'system'
+  });
+  saveAudit();
+}
+function actionClass(action) {
+  if (action === 'signin')        return 'log-signin';
+  if (action === 'signup')        return 'log-signup';
+  if (action === 'signout')       return 'log-signout';
+  if (action === 'recipe-add')    return 'log-recipe-add';
+  if (action === 'recipe-edit')   return 'log-recipe-edit';
+  if (action === 'recipe-delete') return 'log-recipe-delete';
+  if (action === 'pw-reset')      return 'log-pw-reset';
+  if (action === 'user-delete')   return 'log-user-delete';
+  return '';
+}
+function actionLabel(action) {
+  const map = {
+    'signin':'Signed in','signup':'Signed up','signout':'Signed out',
+    'recipe-add':'Recipe added','recipe-edit':'Recipe edited','recipe-delete':'Recipe deleted',
+    'pw-reset':'Password reset','user-delete':'User deleted'
+  };
+  return map[action] || action;
+}
+function fmtTs(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── Admin tab switching ── */
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach((b,i) => {
+    const tabs = ['overview','users','log'];
+    b.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  const map = {overview:'adminOverview', users:'adminUsers', log:'adminLog'};
+  document.getElementById(map[tab]).classList.add('active');
+  if (tab === 'overview') renderAdminOverview();
+  if (tab === 'users')    renderAdminUsers();
+  if (tab === 'log')      renderAdminLog();
+}
+
+/* ── Admin overview ── */
+function renderAdminOverview() {
+  const totalUsers   = Object.keys(users).length;
+  const totalRecipes = recipes.length;
+  const totalComments= recipes.reduce((a,r)=>a+(r.comments?r.comments.length:0),0);
+  const totalRatings = recipes.reduce((a,r)=>a+(r.ratings?r.ratings.length:0),0);
+  document.getElementById('adminStats').innerHTML = `
+    <div class="stat-card"><span class="stat-val">${totalUsers}</span><span class="stat-lbl">Total Users</span></div>
+    <div class="stat-card"><span class="stat-val">${totalRecipes}</span><span class="stat-lbl">Total Recipes</span></div>
+    <div class="stat-card"><span class="stat-val">${totalComments}</span><span class="stat-lbl">Comments</span></div>
+    <div class="stat-card"><span class="stat-val">${totalRatings}</span><span class="stat-lbl">Ratings</span></div>
+    <div class="stat-card"><span class="stat-val">${auditLog.length}</span><span class="stat-lbl">Log Entries</span></div>
+  `;
+  const recent = auditLog.slice(0,10);
+  document.getElementById('adminRecentLog').innerHTML = recent.length
+    ? `<thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+        ${recent.map(e=>`<tr>
+          <td style="white-space:nowrap;color:var(--muted);font-size:12px;">${fmtTs(e.ts)}</td>
+          <td><strong style="color:var(--gold);">${esc(e.user)}</strong></td>
+          <td><span class="log-action ${actionClass(e.action)}">${actionLabel(e.action)}</span></td>
+          <td style="color:var(--muted);font-size:13px;">${esc(e.detail)}</td>
+        </tr>`).join('')}
+       </tbody>`
+    : `<tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">No activity yet.</td></tr></tbody>`;
+}
+
+/* ── Admin users ── */
+let resetTargetUser = null;
+function renderAdminUsers() {
+  const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
+  const list = Object.values(users).filter(u => !q || u.username.toLowerCase().includes(q));
+  document.getElementById('userCount').textContent = `${list.length} user${list.length!==1?'s':''}`;
+  const isAdmin = u => u.username === 'admin';
+  document.getElementById('adminUsersTable').innerHTML = `
+    <thead><tr><th>Username</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(u => {
+      const recipeCount = recipes.filter(r=>r.author===u.username).length;
+      const isSelf = u.username === currentUser;
+      const adminBadge = isAdmin(u) ? `<span class="admin-badge">Admin</span> ` : '';
+      return `<tr>
+        <td>${adminBadge}<strong style="color:var(--cream);">${esc(u.username)}</strong>${isSelf?' <span style="color:var(--muted);font-size:11px;">(you)</span>':''}</td>
+        <td style="color:var(--muted);">${isAdmin(u)?'Administrator':'Member'}</td>
+        <td style="color:var(--muted);font-size:13px;">${u.createdAt||'—'}</td>
+        <td style="color:var(--muted);">${recipeCount}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="openResetModal('${esc(u.username)}')">Reset password</button>
+            ${!isSelf&&!isAdmin(u)?`<button class="btn btn-sm btn-danger" onclick="deleteUser('${esc(u.username)}')">Delete</button>`:''}
+          </div>
+        </td>
+      </tr>`;
+    }).join('')}
+    ${!list.length?'<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No users found.</td></tr>':''}</tbody>`;
+}
+
+function openResetModal(username) {
+  resetTargetUser = username;
+  document.getElementById('resetUsername').textContent = username;
+  document.getElementById('resetNewPass').value = '';
+  document.getElementById('resetConfirmPass').value = '';
+  document.getElementById('resetAlert').innerHTML = '';
+  document.getElementById('resetModal').classList.add('open');
+}
+function confirmResetPassword() {
+  const newPass = document.getElementById('resetNewPass').value;
+  const confirm = document.getElementById('resetConfirmPass').value;
+  const alertEl = document.getElementById('resetAlert');
+  if (!newPass) { alertEl.innerHTML='<div class="alert alert-error">Please enter a new password.</div>'; return; }
+  if (newPass !== confirm) { alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>'; return; }
+  if (!users[resetTargetUser]) { alertEl.innerHTML='<div class="alert alert-error">User not found.</div>'; return; }
+  users[resetTargetUser].password = btoa(newPass);
+  saveUsers();
+  logAction('pw-reset', `Password reset for ${resetTargetUser}`);
+  closeModal('resetModal');
+  renderAdminUsers();
+}
+
+function deleteUser(username) {
+  if (!confirm(`Permanently delete user "${username}"? Their recipes will remain but be attributed to a deleted account.`)) return;
+  delete users[username];
+  saveUsers();
+  logAction('user-delete', `Deleted user: ${username}`);
+  renderAdminUsers();
+  renderAdminOverview();
+}
+
+/* ── Admin audit log ── */
+function renderAdminLog() {
+  const filter = document.getElementById('logFilter')?.value || '';
+  const list = auditLog.filter(e => {
+    if (!filter) return true;
+    if (filter === 'recipe') return e.action.startsWith('recipe');
+    if (filter === 'admin')  return e.action === 'pw-reset' || e.action === 'user-delete';
+    return e.action === filter;
+  });
+  document.getElementById('logCount').textContent = `${list.length} entr${list.length!==1?'ies':'y'}`;
+  document.getElementById('adminLogTable').innerHTML = list.length
+    ? `<thead><tr><th>Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+        ${list.map(e=>`<tr>
+          <td style="white-space:nowrap;color:var(--muted);font-size:12px;">${fmtTs(e.ts)}</td>
+          <td><strong style="color:var(--gold);">${esc(e.user)}</strong></td>
+          <td><span class="log-action ${actionClass(e.action)}">${actionLabel(e.action)}</span></td>
+          <td style="color:var(--muted);font-size:13px;">${esc(e.detail)}</td>
+        </tr>`).join('')}
+       </tbody>`
+    : `<tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem;">No log entries match.</td></tr></tbody>`;
+}
+function clearAuditLog() {
+  if (!confirm('Clear the entire audit log? This cannot be undone.')) return;
+  auditLog = [];
+  saveAudit();
+  renderAdminLog();
+  renderAdminOverview();
+}
+
+/* ── Import tab switching ── */
+function switchImportTab(tab) {
+  const isUrl = tab === 'url';
+  document.getElementById('importTabUrl').style.display   = isUrl ? 'block' : 'none';
+  document.getElementById('importTabPhoto').style.display = isUrl ? 'none'  : 'block';
+  document.getElementById('tabUrl').style.color              = isUrl ? 'var(--gold2)' : 'var(--muted)';
+  document.getElementById('tabUrl').style.borderBottomColor  = isUrl ? 'var(--gold)'  : 'transparent';
+  document.getElementById('tabPhoto').style.color             = isUrl ? 'var(--muted)' : 'var(--gold2)';
+  document.getElementById('tabPhoto').style.borderBottomColor = isUrl ? 'transparent' : 'var(--gold)';
+  document.getElementById('importAlert').innerHTML = '';
+}
+
+/* ── Photo handling ── */
+let photoBase64 = null;
+let photoMediaType = 'image/jpeg';
+function handlePhotoSelected(e) { const f=e.target.files[0]; if(f) loadPhotoFile(f); }
+function handlePhotoDrop(e) {
+  e.preventDefault();
+  document.getElementById('photoDropZone').style.borderColor='var(--border)';
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')) loadPhotoFile(f);
+}
+function loadPhotoFile(file) {
+  photoMediaType = file.type||'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    photoBase64 = e.target.result.split(',')[1];
+    document.getElementById('photoPreview').src = e.target.result;
+    document.getElementById('photoPreviewWrap').style.display = 'block';
+    document.getElementById('photoDropZone').style.display = 'none';
+    document.getElementById('importAlert').innerHTML = '';
+  };
+  reader.readAsDataURL(file);
+}
+function clearPhotoImport() {
+  photoBase64 = null;
+  document.getElementById('photoFileInput').value = '';
+  document.getElementById('photoPreviewWrap').style.display = 'none';
+  document.getElementById('photoDropZone').style.display = 'block';
+  document.getElementById('importAlert').innerHTML = '';
+}
+
+/* ── Shared form population ── */
+function populateForm(extracted, sourceUrl) {
+  if(extracted.name)        document.getElementById('fName').value = extracted.name;
+  if(extracted.category==='Baking'||extracted.category==='Cooking') document.getElementById('fCategory').value = extracted.category;
+  if(['Easy','Medium','Hard'].includes(extracted.difficulty)) document.getElementById('fDifficulty').value = extracted.difficulty;
+  if(extracted.prep)        document.getElementById('fPrep').value = extracted.prep;
+  if(extracted.cook)        document.getElementById('fCook').value = extracted.cook;
+  if(extracted.rest)        document.getElementById('fRest').value = extracted.rest;
+  if(extracted.servings)    document.getElementById('fServings').value = extracted.servings;
+  toggleRestField();
+  if(extracted.description) document.getElementById('fDesc').value = extracted.description;
+  if(sourceUrl)             document.getElementById('fSource').value = sourceUrl;
+  if(extracted.nutrition) {
+    if(extracted.nutrition.calories) document.getElementById('fCalories').value = extracted.nutrition.calories;
+    if(extracted.nutrition.protein)  document.getElementById('fProtein').value  = extracted.nutrition.protein;
+    if(extracted.nutrition.carbs)    document.getElementById('fCarbs').value    = extracted.nutrition.carbs;
+    if(extracted.nutrition.fat)      document.getElementById('fFat').value      = extracted.nutrition.fat;
+  }
+  ingCount=0; document.getElementById('ingredientsList').innerHTML='';
+  (extracted.ingredients||[]).forEach(v=>addIngredient(v));
+  if(!(extracted.ingredients||[]).length){addIngredient();addIngredient();addIngredient();}
+  stepCount=0; document.getElementById('stepsList').innerHTML='';
+  (extracted.steps||[]).forEach(v=>addStep(v));
+  if(!(extracted.steps||[]).length){addStep();addStep();}
+}
+
+/* ── Import from Photo ── */
+async function importFromImage() {
+  if(!photoBase64){document.getElementById('importAlert').innerHTML='<div class="alert alert-error">Please upload a photo first.</div>';return;}
+  document.getElementById('importAlert').innerHTML='';
+  document.getElementById('loadingModal').classList.add('open');
+  document.getElementById('loadingMsg').textContent='AI is reading your photo...';
+  try {
+    const res = await fetch('/.netlify/functions/import-recipe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'image',imageBase64:photoBase64,mediaType:photoMediaType})});
+    const extracted = await res.json();
+    if(!res.ok) throw new Error(extracted.error||'Server error');
+    document.getElementById('loadingModal').classList.remove('open');
+    populateForm(extracted,'');
+    document.getElementById('importAlert').innerHTML='<div class="alert alert-success">✅ Recipe extracted from photo! Review and correct the details below before saving.</div>';
+  } catch(err) {
+    document.getElementById('loadingModal').classList.remove('open');
+    document.getElementById('importAlert').innerHTML=`<div class="alert alert-error">⚠️ Could not extract recipe: ${esc(err.message||'Unknown error')}. Try a clearer photo or fill in manually.</div>`;
+  }
+}
+
+/* ── Import from URL ── */
+async function importFromUrl() {
+  const url=document.getElementById('importUrl').value.trim();
+  const alertEl=document.getElementById('importAlert');
+  if(!url){alertEl.innerHTML='<div class="alert alert-error">Please paste a recipe URL first.</div>';return;}
+  try{new URL(url);}catch(e){alertEl.innerHTML='<div class="alert alert-error">That doesn\'t look like a valid URL. Make sure it starts with https://</div>';return;}
+  alertEl.innerHTML='';
+  document.getElementById('loadingModal').classList.add('open');
+  document.getElementById('loadingMsg').textContent='Fetching and reading the recipe...';
+  try {
+    const res=await fetch('/.netlify/functions/import-recipe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'url',url})});
+    const extracted=await res.json();
+    if(!res.ok) throw new Error(extracted.error||'Server error');
+    document.getElementById('loadingModal').classList.remove('open');
+    populateForm(extracted,url);
+    alertEl.innerHTML='<div class="alert alert-success">✅ Recipe imported! Review the details below and make any corrections before saving.</div>';
+  } catch(err) {
+    document.getElementById('loadingModal').classList.remove('open');
+    alertEl.innerHTML=`<div class="alert alert-error">⚠️ Import failed: ${esc(err.message||'Unknown error')}. You can fill in the recipe manually below.</div>`;
+  }
 }
 
 /* ── Boot ── */
