@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Recipe Vault — Community Kitchen</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Georgia, serif; background: #1a1208; color: #e8d5b0; min-height: 100vh; }
@@ -151,11 +152,6 @@
     }
 
 
-    .import-box { background:var(--bg3); border:1px dashed var(--gold); border-radius:var(--radius); padding:1.25rem; margin-bottom:1.5rem; }
-    .import-row { display:flex; gap:8px; }
-    .import-row input { flex:1; padding:9px 12px; background:var(--bg2); border:1px solid var(--border); color:var(--cream); border-radius:var(--radius); font-size:14px; }
-    .import-row input:focus { outline:none; border-color:var(--gold); }
-    .import-note { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.6; }
     /* ── Admin panel ── */
     .admin-tabs { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:1.5rem; }
     .admin-tab { background:none; border:none; color:var(--muted); cursor:pointer; padding:10px 20px; font-size:15px; font-family:Georgia,serif; border-bottom:2px solid transparent; transition:all 0.2s; }
@@ -225,37 +221,7 @@
 
       
 
-      <div class="import-box" id="importBox">
-        <div style="display:flex;gap:0;margin-bottom:1rem;border-bottom:1px solid var(--border);">
-          <button id="tabUrl" onclick="switchImportTab('url')" style="background:none;border:none;color:var(--gold2);cursor:pointer;padding:6px 16px 10px;font-family:Georgia,serif;font-size:14px;border-bottom:2px solid var(--gold);margin-bottom:-1px;">Link</button>
-          <button id="tabPhoto" onclick="switchImportTab('photo')" style="background:none;border:none;color:var(--muted);cursor:pointer;padding:6px 16px 10px;font-family:Georgia,serif;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;">Photo</button>
-        </div>
-        <div id="importTabUrl">
-          <div class="import-row">
-            <input type="url" id="importUrl" placeholder="Paste a recipe URL — e.g. https://www.allrecipes.com/recipe/...">
-            <button class="btn btn-gold" onclick="importFromUrl()">Import</button>
-          </div>
-          <div class="import-note">Paste a link from any recipe website and AI will extract the details automatically.<br><strong style="color:var(--gold);">Works great with:</strong> AllRecipes, Food Network, BBC Good Food, Tasty, Serious Eats, and most major recipe sites.</div>
-        </div>
-        <div id="importTabPhoto" style="display:none;">
-          <div id="photoDropZone" onclick="document.getElementById('photoFileInput').click()" ondragover="event.preventDefault();this.style.borderColor='var(--gold)'" ondragleave="this.style.borderColor='var(--border)'" ondrop="handlePhotoDrop(event)" style="border:2px dashed var(--border);border-radius:var(--radius);padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s;">
-            <div style="font-size:36px;margin-bottom:8px;">📷</div>
-            <div style="color:var(--cream);font-size:15px;margin-bottom:4px;">Click to upload a photo</div>
-            <div style="color:var(--muted);font-size:13px;">or drag and drop an image here</div>
-            <div style="color:var(--muted);font-size:12px;margin-top:6px;">JPG, PNG, WEBP supported</div>
-          </div>
-          <input type="file" id="photoFileInput" accept="image/*" style="display:none;" onchange="handlePhotoSelected(event)">
-          <div id="photoPreviewWrap" style="display:none;margin-top:10px;">
-            <img id="photoPreview" style="max-width:100%;max-height:220px;border-radius:var(--radius);object-fit:contain;background:var(--bg3);padding:4px;">
-            <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-              <button class="btn btn-gold" onclick="importFromImage()">Extract Recipe from Photo</button>
-              <button class="btn btn-sm" onclick="clearPhotoImport()">Clear photo</button>
-            </div>
-          </div>
-          <div class="import-note" style="margin-top:10px;">Upload a photo of a recipe — a handwritten card, cookbook page, screenshot, or printed recipe. AI will read and extract everything it can find.<br><strong style="color:var(--gold);">Tip:</strong> Clear, well-lit photos of printed or handwritten recipes work best.</div>
-        </div>
-        <div id="importAlert" style="margin-top:10px;"></div>
-      </div>
+      
 
       <div id="formAlert"></div>
 
@@ -378,14 +344,7 @@
 </div>
 
 
-<!-- Loading Modal -->
-<div class="modal-bg" id="loadingModal">
-  <div class="modal" style="text-align:center;max-width:340px;">
-    <div style="font-size:40px;margin-bottom:1rem;">⏳</div>
-    <h2 style="margin-bottom:0.75rem;">Importing Recipe</h2>
-    <p style="color:var(--muted);font-size:14px;line-height:1.6;" id="loadingMsg">Reading the recipe page...</p>
-  </div>
-</div>
+
 
 <!-- Auth Modal -->
 <div class="modal-bg" id="authModal">
@@ -394,13 +353,36 @@
     <div id="authAlert"></div>
     <div class="form-group"><label>Username</label><input type="text" id="authUser" placeholder="Your username" autocomplete="username"></div>
     <div class="form-group"><label>Password</label><input type="password" id="authPass" placeholder="Password" autocomplete="current-password"></div>
+    <div class="form-group" id="authEmailGroup" style="display:none">
+      <label>Email *</label><input type="email" id="authEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
     <div class="form-group" id="authConfirmGroup" style="display:none">
       <label>Confirm Password</label><input type="password" id="authConfirm" placeholder="Repeat password" autocomplete="new-password">
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="toggleAuthMode()" id="authSwitchBtn"></button>
       <button class="btn" onclick="closeModal('authModal')">Cancel</button>
       <button class="btn btn-gold" onclick="submitAuth()" id="authSubmitBtn"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-bg" id="forgotModal">
+  <div class="modal" style="max-width:380px;">
+    <h2>Reset Password</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:1.25rem;">Enter your username and we'll send a temporary password to your registered email.</p>
+    <div id="forgotAlert"></div>
+    <div class="form-group"><label>Username</label><input type="text" id="forgotUser" placeholder="Your username"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('forgotModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="sendPasswordReset()" id="forgotBtn">Send Reset Email</button>
     </div>
   </div>
 </div>
@@ -638,9 +620,6 @@ function resetForm() {
   document.getElementById('fCategory').value='Baking';
   document.getElementById('fDifficulty').value='Easy';
   toggleRestField();
-  document.getElementById('importBox').style.display='block';
-  switchImportTab('url');
-  clearPhotoImport();
   ingCount=0; stepCount=0;
   document.getElementById('ingredientsList').innerHTML='';
   document.getElementById('stepsList').innerHTML='';
@@ -677,7 +656,6 @@ function editRecipe(id) {
   stepCount=0; document.getElementById('stepsList').innerHTML='';
   (r.steps||['']).forEach(v=>addStep(v));
   document.getElementById('formAlert').innerHTML='';
-  document.getElementById('importBox').style.display='none';
   showPage('add');
 }
 
@@ -753,27 +731,41 @@ function openAuth(mode) {
   document.getElementById('authSubmitBtn').textContent=mode==='signin'?'Sign In':'Create Account';
   document.getElementById('authSwitchBtn').textContent=mode==='signin'?'Create account instead':'Already have an account?';
   document.getElementById('authConfirmGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('authEmailGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('forgotPasswordLink').style.display=mode==='signin'?'block':'none';
   document.getElementById('authUser').value='';
   document.getElementById('authPass').value='';
   const c=document.getElementById('authConfirm'); if(c) c.value='';
+  const e=document.getElementById('authEmail'); if(e) e.value='';
   document.getElementById('authAlert').innerHTML='';
 }
 function toggleAuthMode(){openAuth(authMode==='signin'?'signup':'signin');}
 function closeModal(id){document.getElementById(id||'authModal').classList.remove('open');}
-function submitAuth(){
+async function submitAuth(){
   const user=document.getElementById('authUser').value.trim();
   const pass=document.getElementById('authPass').value;
   const alertEl=document.getElementById('authAlert');
   if(!user||!pass){alertEl.innerHTML='<div class="alert alert-error">Please fill in all fields.</div>';return;}
   if(authMode==='signup'){
+    const email=document.getElementById('authEmail').value.trim();
     const conf=document.getElementById('authConfirm').value;
+    if(!email){alertEl.innerHTML='<div class="alert alert-error">Please enter your email address.</div>';return;}
+    if(!email.includes('@')){alertEl.innerHTML='<div class="alert alert-error">Please enter a valid email address.</div>';return;}
     if(pass!==conf){alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>';return;}
     if(users[user]){alertEl.innerHTML='<div class="alert alert-error">That username is already taken.</div>';return;}
-    users[user]={username:user,password:btoa(pass),createdAt:today()};
+    const hashed = await hashPassword(pass);
+    users[user]={username:user,password:hashed,email:email,createdAt:today()};
     saveUsers(); currentUser=user;
     logAction('signup', `New account: ${user}`, user);
   }else{
-    if(!users[user]||users[user].password!==btoa(pass)){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    if(!users[user]){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    const hashed = await hashPassword(pass);
+    // Support both old btoa passwords and new hashed ones
+    const validNew = users[user].password === hashed;
+    const validOld = users[user].password === btoa(pass);
+    if(!validNew && !validOld){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    // Upgrade old password to hashed on login
+    if(validOld && !validNew){ users[user].password = hashed; saveUsers(); }
     currentUser=user;
     logAction('signin', `Signed in`, user);
   }
@@ -874,13 +866,14 @@ function renderAdminUsers() {
   document.getElementById('userCount').textContent = `${list.length} user${list.length!==1?'s':''}`;
   const isAdmin = u => u.username === 'admin';
   document.getElementById('adminUsersTable').innerHTML = `
-    <thead><tr><th>Username</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
     <tbody>${list.map(u => {
       const recipeCount = recipes.filter(r=>r.author===u.username).length;
       const isSelf = u.username === currentUser;
       const adminBadge = isAdmin(u) ? `<span class="admin-badge">Admin</span> ` : '';
       return `<tr>
         <td>${adminBadge}<strong style="color:var(--cream);">${esc(u.username)}</strong>${isSelf?' <span style="color:var(--muted);font-size:11px;">(you)</span>':''}</td>
+        <td style="color:var(--muted);font-size:13px;">${u.email||'<span style=color:#6a4020>No email</span>'}</td>
         <td style="color:var(--muted);">${isAdmin(u)?'Administrator':'Member'}</td>
         <td style="color:var(--muted);font-size:13px;">${u.createdAt||'—'}</td>
         <td style="color:var(--muted);">${recipeCount}</td>
@@ -910,11 +903,13 @@ function confirmResetPassword() {
   if (!newPass) { alertEl.innerHTML='<div class="alert alert-error">Please enter a new password.</div>'; return; }
   if (newPass !== confirm) { alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>'; return; }
   if (!users[resetTargetUser]) { alertEl.innerHTML='<div class="alert alert-error">User not found.</div>'; return; }
-  users[resetTargetUser].password = btoa(newPass);
-  saveUsers();
-  logAction('pw-reset', `Password reset for ${resetTargetUser}`);
-  closeModal('resetModal');
-  renderAdminUsers();
+  hashPassword(newPass).then(hashed => {
+    users[resetTargetUser].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Password reset for ${resetTargetUser}`);
+    closeModal('resetModal');
+    renderAdminUsers();
+  });
 }
 
 function deleteUser(username) {
@@ -955,112 +950,65 @@ function clearAuditLog() {
   renderAdminOverview();
 }
 
-/* ── Import tab switching ── */
-function switchImportTab(tab) {
-  const isUrl = tab === 'url';
-  document.getElementById('importTabUrl').style.display   = isUrl ? 'block' : 'none';
-  document.getElementById('importTabPhoto').style.display = isUrl ? 'none'  : 'block';
-  document.getElementById('tabUrl').style.color              = isUrl ? 'var(--gold2)' : 'var(--muted)';
-  document.getElementById('tabUrl').style.borderBottomColor  = isUrl ? 'var(--gold)'  : 'transparent';
-  document.getElementById('tabPhoto').style.color             = isUrl ? 'var(--muted)' : 'var(--gold2)';
-  document.getElementById('tabPhoto').style.borderBottomColor = isUrl ? 'transparent' : 'var(--gold)';
-  document.getElementById('importAlert').innerHTML = '';
+
+
+
+
+/* ── EmailJS config ── */
+const EMAILJS_SERVICE  = 'service_4gy8d5i';
+const EMAILJS_TEMPLATE = 'template_r3adf8n';
+const EMAILJS_PUBLIC   = 'xRww7nZeZ_2UqzJ02';
+
+/* ── Password hashing (SHA-256) ── */
+async function hashPassword(password) {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/* ── Photo handling ── */
-let photoBase64 = null;
-let photoMediaType = 'image/jpeg';
-function handlePhotoSelected(e) { const f=e.target.files[0]; if(f) loadPhotoFile(f); }
-function handlePhotoDrop(e) {
-  e.preventDefault();
-  document.getElementById('photoDropZone').style.borderColor='var(--border)';
-  const f=e.dataTransfer.files[0];
-  if(f&&f.type.startsWith('image/')) loadPhotoFile(f);
-}
-function loadPhotoFile(file) {
-  photoMediaType = file.type||'image/jpeg';
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    photoBase64 = e.target.result.split(',')[1];
-    document.getElementById('photoPreview').src = e.target.result;
-    document.getElementById('photoPreviewWrap').style.display = 'block';
-    document.getElementById('photoDropZone').style.display = 'none';
-    document.getElementById('importAlert').innerHTML = '';
-  };
-  reader.readAsDataURL(file);
-}
-function clearPhotoImport() {
-  photoBase64 = null;
-  document.getElementById('photoFileInput').value = '';
-  document.getElementById('photoPreviewWrap').style.display = 'none';
-  document.getElementById('photoDropZone').style.display = 'block';
-  document.getElementById('importAlert').innerHTML = '';
+/* ── Forgot password ── */
+function openForgotPassword() {
+  closeModal('authModal');
+  document.getElementById('forgotUser').value = '';
+  document.getElementById('forgotAlert').innerHTML = '';
+  document.getElementById('forgotBtn').textContent = 'Send Reset Email';
+  document.getElementById('forgotModal').classList.add('open');
 }
 
-/* ── Shared form population ── */
-function populateForm(extracted, sourceUrl) {
-  if(extracted.name)        document.getElementById('fName').value = extracted.name;
-  if(extracted.category==='Baking'||extracted.category==='Cooking') document.getElementById('fCategory').value = extracted.category;
-  if(['Easy','Medium','Hard'].includes(extracted.difficulty)) document.getElementById('fDifficulty').value = extracted.difficulty;
-  if(extracted.prep)        document.getElementById('fPrep').value = extracted.prep;
-  if(extracted.cook)        document.getElementById('fCook').value = extracted.cook;
-  if(extracted.rest)        document.getElementById('fRest').value = extracted.rest;
-  if(extracted.servings)    document.getElementById('fServings').value = extracted.servings;
-  toggleRestField();
-  if(extracted.description) document.getElementById('fDesc').value = extracted.description;
-  if(sourceUrl)             document.getElementById('fSource').value = sourceUrl;
-  if(extracted.nutrition) {
-    if(extracted.nutrition.calories) document.getElementById('fCalories').value = extracted.nutrition.calories;
-    if(extracted.nutrition.protein)  document.getElementById('fProtein').value  = extracted.nutrition.protein;
-    if(extracted.nutrition.carbs)    document.getElementById('fCarbs').value    = extracted.nutrition.carbs;
-    if(extracted.nutrition.fat)      document.getElementById('fFat').value      = extracted.nutrition.fat;
-  }
-  ingCount=0; document.getElementById('ingredientsList').innerHTML='';
-  (extracted.ingredients||[]).forEach(v=>addIngredient(v));
-  if(!(extracted.ingredients||[]).length){addIngredient();addIngredient();addIngredient();}
-  stepCount=0; document.getElementById('stepsList').innerHTML='';
-  (extracted.steps||[]).forEach(v=>addStep(v));
-  if(!(extracted.steps||[]).length){addStep();addStep();}
-}
+async function sendPasswordReset() {
+  const username = document.getElementById('forgotUser').value.trim();
+  const alertEl  = document.getElementById('forgotAlert');
+  const btn      = document.getElementById('forgotBtn');
+  if (!username) { alertEl.innerHTML = '<div class="alert alert-error">Please enter your username.</div>'; return; }
+  if (!users[username]) { alertEl.innerHTML = '<div class="alert alert-error">No account found with that username.</div>'; return; }
+  if (!users[username].email) { alertEl.innerHTML = '<div class="alert alert-error">No email address on file for this account. Please contact the admin.</div>'; return; }
 
-/* ── Import from Photo ── */
-async function importFromImage() {
-  if(!photoBase64){document.getElementById('importAlert').innerHTML='<div class="alert alert-error">Please upload a photo first.</div>';return;}
-  document.getElementById('importAlert').innerHTML='';
-  document.getElementById('loadingModal').classList.add('open');
-  document.getElementById('loadingMsg').textContent='AI is reading your photo...';
+  // Generate a random temporary password
+  const tempPass = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  const hashed   = await hashPassword(tempPass);
+
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
   try {
-    const res = await fetch('/.netlify/functions/import-recipe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'image',imageBase64:photoBase64,mediaType:photoMediaType})});
-    const extracted = await res.json();
-    if(!res.ok) throw new Error(extracted.error||'Server error');
-    document.getElementById('loadingModal').classList.remove('open');
-    populateForm(extracted,'');
-    document.getElementById('importAlert').innerHTML='<div class="alert alert-success">✅ Recipe extracted from photo! Review and correct the details below before saving.</div>';
+    emailjs.init(EMAILJS_PUBLIC);
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_name:       users[username].username,
+      to_email:      users[username].email,
+      temp_password: tempPass,
+      from_name:     'The Recipe Vault'
+    });
+    // Only update password after email sends successfully
+    users[username].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Self-service password reset for ${username}`, username);
+    alertEl.innerHTML = '<div class="alert alert-success">✅ A temporary password has been sent to your email. Check your inbox and use it to sign in.</div>';
+    btn.textContent = 'Sent!';
   } catch(err) {
-    document.getElementById('loadingModal').classList.remove('open');
-    document.getElementById('importAlert').innerHTML=`<div class="alert alert-error">⚠️ Could not extract recipe: ${esc(err.message||'Unknown error')}. Try a clearer photo or fill in manually.</div>`;
-  }
-}
-
-/* ── Import from URL ── */
-async function importFromUrl() {
-  const url=document.getElementById('importUrl').value.trim();
-  const alertEl=document.getElementById('importAlert');
-  if(!url){alertEl.innerHTML='<div class="alert alert-error">Please paste a recipe URL first.</div>';return;}
-  try{new URL(url);}catch(e){alertEl.innerHTML='<div class="alert alert-error">That doesn\'t look like a valid URL. Make sure it starts with https://</div>';return;}
-  alertEl.innerHTML='';
-  document.getElementById('loadingModal').classList.add('open');
-  document.getElementById('loadingMsg').textContent='Fetching and reading the recipe...';
-  try {
-    const res=await fetch('/.netlify/functions/import-recipe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'url',url})});
-    const extracted=await res.json();
-    if(!res.ok) throw new Error(extracted.error||'Server error');
-    document.getElementById('loadingModal').classList.remove('open');
-    populateForm(extracted,url);
-    alertEl.innerHTML='<div class="alert alert-success">✅ Recipe imported! Review the details below and make any corrections before saving.</div>';
-  } catch(err) {
-    document.getElementById('loadingModal').classList.remove('open');
-    alertEl.innerHTML=`<div class="alert alert-error">⚠️ Import failed: ${esc(err.message||'Unknown error')}. You can fill in the recipe manually below.</div>`;
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Could not send email. Please contact the admin to reset your password.</div>';
+    btn.textContent = 'Send Reset Email';
+    btn.disabled = false;
   }
 }
 
