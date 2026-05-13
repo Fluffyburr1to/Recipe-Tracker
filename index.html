@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>The Recipe Vault — Community Kitchen</title>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Georgia, serif; background: #1a1208; color: #e8d5b0; min-height: 100vh; }
@@ -352,13 +353,36 @@
     <div id="authAlert"></div>
     <div class="form-group"><label>Username</label><input type="text" id="authUser" placeholder="Your username" autocomplete="username"></div>
     <div class="form-group"><label>Password</label><input type="password" id="authPass" placeholder="Password" autocomplete="current-password"></div>
+    <div class="form-group" id="authEmailGroup" style="display:none">
+      <label>Email *</label><input type="email" id="authEmail" placeholder="your@email.com" autocomplete="email">
+    </div>
     <div class="form-group" id="authConfirmGroup" style="display:none">
       <label>Confirm Password</label><input type="password" id="authConfirm" placeholder="Repeat password" autocomplete="new-password">
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
+    </div>
+    <div id="forgotPasswordLink" style="text-align:right;margin-bottom:8px;display:none;">
+      <a onclick="openForgotPassword()" style="font-size:13px;color:var(--gold);cursor:pointer;">Forgot password?</a>
     </div>
     <div class="modal-actions">
       <button class="btn" onclick="toggleAuthMode()" id="authSwitchBtn"></button>
       <button class="btn" onclick="closeModal('authModal')">Cancel</button>
       <button class="btn btn-gold" onclick="submitAuth()" id="authSubmitBtn"></button>
+    </div>
+  </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal-bg" id="forgotModal">
+  <div class="modal" style="max-width:380px;">
+    <h2>Reset Password</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:1.25rem;">Enter your username and we'll send a temporary password to your registered email.</p>
+    <div id="forgotAlert"></div>
+    <div class="form-group"><label>Username</label><input type="text" id="forgotUser" placeholder="Your username"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal('forgotModal')">Cancel</button>
+      <button class="btn btn-gold" onclick="sendPasswordReset()" id="forgotBtn">Send Reset Email</button>
     </div>
   </div>
 </div>
@@ -707,27 +731,41 @@ function openAuth(mode) {
   document.getElementById('authSubmitBtn').textContent=mode==='signin'?'Sign In':'Create Account';
   document.getElementById('authSwitchBtn').textContent=mode==='signin'?'Create account instead':'Already have an account?';
   document.getElementById('authConfirmGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('authEmailGroup').style.display=mode==='signup'?'block':'none';
+  document.getElementById('forgotPasswordLink').style.display=mode==='signin'?'block':'none';
   document.getElementById('authUser').value='';
   document.getElementById('authPass').value='';
   const c=document.getElementById('authConfirm'); if(c) c.value='';
+  const e=document.getElementById('authEmail'); if(e) e.value='';
   document.getElementById('authAlert').innerHTML='';
 }
 function toggleAuthMode(){openAuth(authMode==='signin'?'signup':'signin');}
 function closeModal(id){document.getElementById(id||'authModal').classList.remove('open');}
-function submitAuth(){
+async function submitAuth(){
   const user=document.getElementById('authUser').value.trim();
   const pass=document.getElementById('authPass').value;
   const alertEl=document.getElementById('authAlert');
   if(!user||!pass){alertEl.innerHTML='<div class="alert alert-error">Please fill in all fields.</div>';return;}
   if(authMode==='signup'){
+    const email=document.getElementById('authEmail').value.trim();
     const conf=document.getElementById('authConfirm').value;
+    if(!email){alertEl.innerHTML='<div class="alert alert-error">Please enter your email address.</div>';return;}
+    if(!email.includes('@')){alertEl.innerHTML='<div class="alert alert-error">Please enter a valid email address.</div>';return;}
     if(pass!==conf){alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>';return;}
     if(users[user]){alertEl.innerHTML='<div class="alert alert-error">That username is already taken.</div>';return;}
-    users[user]={username:user,password:btoa(pass),createdAt:today()};
+    const hashed = await hashPassword(pass);
+    users[user]={username:user,password:hashed,email:email,createdAt:today()};
     saveUsers(); currentUser=user;
     logAction('signup', `New account: ${user}`, user);
   }else{
-    if(!users[user]||users[user].password!==btoa(pass)){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    if(!users[user]){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    const hashed = await hashPassword(pass);
+    // Support both old btoa passwords and new hashed ones
+    const validNew = users[user].password === hashed;
+    const validOld = users[user].password === btoa(pass);
+    if(!validNew && !validOld){alertEl.innerHTML='<div class="alert alert-error">Invalid username or password.</div>';return;}
+    // Upgrade old password to hashed on login
+    if(validOld && !validNew){ users[user].password = hashed; saveUsers(); }
     currentUser=user;
     logAction('signin', `Signed in`, user);
   }
@@ -828,13 +866,14 @@ function renderAdminUsers() {
   document.getElementById('userCount').textContent = `${list.length} user${list.length!==1?'s':''}`;
   const isAdmin = u => u.username === 'admin';
   document.getElementById('adminUsersTable').innerHTML = `
-    <thead><tr><th>Username</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Joined</th><th>Recipes</th><th>Actions</th></tr></thead>
     <tbody>${list.map(u => {
       const recipeCount = recipes.filter(r=>r.author===u.username).length;
       const isSelf = u.username === currentUser;
       const adminBadge = isAdmin(u) ? `<span class="admin-badge">Admin</span> ` : '';
       return `<tr>
         <td>${adminBadge}<strong style="color:var(--cream);">${esc(u.username)}</strong>${isSelf?' <span style="color:var(--muted);font-size:11px;">(you)</span>':''}</td>
+        <td style="color:var(--muted);font-size:13px;">${u.email||'<span style=color:#6a4020>No email</span>'}</td>
         <td style="color:var(--muted);">${isAdmin(u)?'Administrator':'Member'}</td>
         <td style="color:var(--muted);font-size:13px;">${u.createdAt||'—'}</td>
         <td style="color:var(--muted);">${recipeCount}</td>
@@ -864,11 +903,13 @@ function confirmResetPassword() {
   if (!newPass) { alertEl.innerHTML='<div class="alert alert-error">Please enter a new password.</div>'; return; }
   if (newPass !== confirm) { alertEl.innerHTML='<div class="alert alert-error">Passwords do not match.</div>'; return; }
   if (!users[resetTargetUser]) { alertEl.innerHTML='<div class="alert alert-error">User not found.</div>'; return; }
-  users[resetTargetUser].password = btoa(newPass);
-  saveUsers();
-  logAction('pw-reset', `Password reset for ${resetTargetUser}`);
-  closeModal('resetModal');
-  renderAdminUsers();
+  hashPassword(newPass).then(hashed => {
+    users[resetTargetUser].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Password reset for ${resetTargetUser}`);
+    closeModal('resetModal');
+    renderAdminUsers();
+  });
 }
 
 function deleteUser(username) {
@@ -912,6 +953,64 @@ function clearAuditLog() {
 
 
 
+
+/* ── EmailJS config ── */
+const EMAILJS_SERVICE  = 'service_4gy8d5i';
+const EMAILJS_TEMPLATE = 'template_r3adf8n';
+const EMAILJS_PUBLIC   = 'xRww7nZeZ_2UqzJ02';
+
+/* ── Password hashing (SHA-256) ── */
+async function hashPassword(password) {
+  const msgBuffer = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/* ── Forgot password ── */
+function openForgotPassword() {
+  closeModal('authModal');
+  document.getElementById('forgotUser').value = '';
+  document.getElementById('forgotAlert').innerHTML = '';
+  document.getElementById('forgotBtn').textContent = 'Send Reset Email';
+  document.getElementById('forgotModal').classList.add('open');
+}
+
+async function sendPasswordReset() {
+  const username = document.getElementById('forgotUser').value.trim();
+  const alertEl  = document.getElementById('forgotAlert');
+  const btn      = document.getElementById('forgotBtn');
+  if (!username) { alertEl.innerHTML = '<div class="alert alert-error">Please enter your username.</div>'; return; }
+  if (!users[username]) { alertEl.innerHTML = '<div class="alert alert-error">No account found with that username.</div>'; return; }
+  if (!users[username].email) { alertEl.innerHTML = '<div class="alert alert-error">No email address on file for this account. Please contact the admin.</div>'; return; }
+
+  // Generate a random temporary password
+  const tempPass = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+  const hashed   = await hashPassword(tempPass);
+
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  try {
+    emailjs.init(EMAILJS_PUBLIC);
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_name:       users[username].username,
+      to_email:      users[username].email,
+      temp_password: tempPass,
+      from_name:     'The Recipe Vault'
+    });
+    // Only update password after email sends successfully
+    users[username].password = hashed;
+    saveUsers();
+    logAction('pw-reset', `Self-service password reset for ${username}`, username);
+    alertEl.innerHTML = '<div class="alert alert-success">✅ A temporary password has been sent to your email. Check your inbox and use it to sign in.</div>';
+    btn.textContent = 'Sent!';
+  } catch(err) {
+    alertEl.innerHTML = '<div class="alert alert-error">⚠️ Could not send email. Please contact the admin to reset your password.</div>';
+    btn.textContent = 'Send Reset Email';
+    btn.disabled = false;
+  }
+}
 
 /* ── Boot ── */
 loadData(); renderHeader(); renderRecipes();
