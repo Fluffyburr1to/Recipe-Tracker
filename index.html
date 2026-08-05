@@ -399,14 +399,23 @@ let authMode = 'signin', editingId = null;
 let ingCount = 0, stepCount = 0;
 
 /* ── Storage ── */
-function loadData() {
-  try { recipes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { recipes = []; }
+async function loadData() {
+  try {
+    const res = await fetch('/.netlify/functions/recipes');
+    recipes = res.ok ? await res.json() : [];
+  } catch(e) { recipes = []; }
   try { users   = JSON.parse(localStorage.getItem(USERS_KEY))   || {}; } catch(e) { users = {}; }
   try { currentUser = JSON.parse(sessionStorage.getItem(SESSION_KEY)) || null; } catch(e) { currentUser = null; }
   loadAudit();
   if (recipes.length === 0) seedSamples();
 }
-function saveRecipes() { localStorage.setItem(STORAGE_KEY, JSON.stringify(recipes)); }
+function saveRecipes() {
+  fetch('/.netlify/functions/recipes', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(recipes),
+  }).catch((e) => console.error('Failed to save recipes:', e));
+}
 function saveUsers()   { localStorage.setItem(USERS_KEY,   JSON.stringify(users)); }
 function saveSession() { sessionStorage.setItem(SESSION_KEY, JSON.stringify(currentUser)); }
 
@@ -1015,7 +1024,7 @@ async function sendPasswordReset() {
 
 /* ── Boot ── */
 emailjs.init(EMAILJS_PUBLIC);
-loadData(); renderHeader(); renderRecipes();
+loadData().then(() => { renderHeader(); renderRecipes(); });
 </script>
 </body>
 </html>
